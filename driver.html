@@ -6,7 +6,8 @@
 <title>DriveEase Driver</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /><link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff6b35">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -80,8 +81,8 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="i18n.js?v=10"></script>
-<script src="app.js?v=10"></script>
+<script src="i18n.js?v=11"></script>
+<script src="app.js?v=11"></script>
 <script>
 let allJobs = [], currentFilter = 'PENDING';
 let map = null, mapMarkers = [];
