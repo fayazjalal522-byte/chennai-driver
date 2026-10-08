@@ -18,7 +18,8 @@
     <label data-i18n="your_name_required">Your Name *</label>
     <input type="text" id="name" data-i18n-placeholder="full_name">
     <label data-i18n="phone_required">Phone *</label>
-    <input type="tel" id="phone" data-i18n-placeholder="phone_placeholder" maxlength="10">
+    <input type="tel" id="phone" data-i18n-placeholder="phone_placeholder" maxlength="10">    <label>Email (for confirmation, optional)</label>
+    <input type="email" id="email" placeholder="your@email.com">
     <label data-i18n="pickup_required">Pickup Location *</label>
     <button class="btn-blue" onclick="handleAutoDetect()" id="detectBtn" style="margin-top:0;margin-bottom:8px;">
       <span id="detectBtnText" data-i18n="detect_location">📍 Auto-detect my area</span>
@@ -159,8 +160,8 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="i18n.js?v=10"></script>
-<script src="app.js?v=10"></script>
+<script src="i18n.js?v=11"></script>
+<script src="app.js?v=11"></script>
 <script>
 let lastBooking = null, selectedRating = 0;
 let customerMap = null, driverMarker = null, trackingInterval = null, trackingActive = false;
@@ -246,7 +247,7 @@ async function bookDriver() {
   const fare = document.getElementById('priceValue').textContent;
   const datetime = document.getElementById('datetime').value;
   const car = document.getElementById('car').value.trim();
-
+  const email = document.getElementById('email') ? document.getElementById('email').value.trim() : '';
   if (!name || phone.length !== 10 || !pickupEl.value || !drop || !datetime) {
     showToast(t('fill_fields')); return;
   }
@@ -256,7 +257,7 @@ async function bookDriver() {
 
   const btn = document.getElementById('bookBtn');
   btn.disabled = true; btn.textContent = t('booking');
-  lastBooking = { name, phone, pickup, drop, service, datetime, car, fare };
+   lastBooking = { name, phone, pickup, drop, service, datetime, car, fare, email };
   try {
     const result = await createBooking(lastBooking);
     if (result.ok) {
