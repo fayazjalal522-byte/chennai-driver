@@ -1,9 +1,9 @@
 // ================================================================
-// YOUR CONFIGURATION
+// DRIVEEASE — CONFIGURATION
 // ================================================================
-const API_URL = 'https://script.google.com/macros/s/AKfycby_z9QpzKtOrC-irvIpes-MWg6TACpm9VI_N8dyas5BIYVXm_5f2Vtko3utLVWPCBE2vQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxhFxAHZ-Cg5Lhmkr4ZfFjC0iBZfwEAEQixsFX-iOs3v-bi2BqZ6rpk1C1vFfkiFjcPMw/exec';
 const BUSINESS_PHONE = '917845199014';
-const OWNER_UPI = 'Chennaiactingdriver@ybl';
+const OWNER_UPI = 'chennaiactingdriver@ybl';
 const COMMISSION_RATE = 0.10;
 
 // ---------------- API ----------------
@@ -33,7 +33,14 @@ async function sendChatMessage(bookingId, sender, message) { return apiCall({ ac
 async function getChatMessages(bookingId) { const d = await apiCall({ action: 'getMessages', bookingId }); return d.messages || []; }
 async function getDriverLocation(bookingId) { return apiCall({ action: 'getLocation', bookingId }); }
 async function markCommissionPaid(driver, amount) { return apiCall({ action: 'commissionPaid', driver, amount }); }
-async function getCommissionStatus(date) { return apiCall({ action: 'commissionStatus', date }); }
+
+// Ride timer + OTP
+async function startRide(id) { return apiCall({ action: 'startRide', id }); }
+async function getOTP(id) { return apiCall({ action: 'getOTP', id }); }
+async function verifyOTP(id, otp) { return apiCall({ action: 'verifyOTP', id, otp }); }
+async function resendOTP(id) { return apiCall({ action: 'resendOTP', id }); }
+async function endRide(id) { return apiCall({ action: 'endRide', id }); }
+async function markNoShow(id) { return apiCall({ action: 'noShow', id }); }
 
 // ---------------- COMMISSION HELPERS ----------------
 function isToday(dateStr) {
@@ -47,8 +54,7 @@ function getTodayCommissionForDriver(driverName, allJobs) {
   const todayCompleted = allJobs.filter(j => j.driver === driverName && j.status === 'COMPLETED' && isToday(j.timestamp));
   const totalEarned = todayCompleted.reduce((s, j) => s + Number(j.fare || 0), 0);
   const commission = Math.round(totalEarned * COMMISSION_RATE);
-  const keeps = totalEarned - commission;
-  return { rides: todayCompleted.length, totalEarned, commission, keeps, jobs: todayCompleted };
+  return { rides: todayCompleted.length, totalEarned, commission, keeps: totalEarned - commission, jobs: todayCompleted };
 }
 
 // ---------------- TOAST ----------------
@@ -66,7 +72,7 @@ async function geocodeArea(name) {
   if (geocodeCache[name]) return geocodeCache[name];
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(name + ', Chennai')}`;
-    const res = await fetch(url, { headers: { 'User-Agent': 'ChennaiDriverApp/1.0' } });
+    const res = await fetch(url, { headers: { 'User-Agent': 'DriveEaseApp/1.0' } });
     const data = await res.json();
     if (data.length > 0) {
       const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
@@ -146,4 +152,24 @@ async function shareDriverLocation(bookingId, driverName) {
 function stopSharingLocation() {
   if (locationWatchId !== null) { navigator.geolocation.clearWatch(locationWatchId); locationWatchId = null; }
   if (locationInterval) { clearInterval(locationInterval); locationInterval = null; }
+}
+
+// ---------------- TIME HELPERS ----------------
+function formatDuration(mins) {
+  if (!mins) return '0 min';
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} hr`;
+  return `${h} hr ${m} min`;
+}
+
+function getElapsedTime(startTimeStr) {
+  if (!startTimeStr) return '00:00:00';
+  const start = new Date(startTimeStr).getTime();
+  const diff = Math.floor((Date.now() - start) / 1000);
+  const h = Math.floor(diff / 3600).toString().padStart(2, '0');
+  const m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+  const s = (diff % 60).toString().padStart(2, '0');
+  return `${h}:${m}:${s}`;
 }

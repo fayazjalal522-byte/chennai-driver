@@ -53,6 +53,18 @@
   <div id="jobsList" style="margin-top:16px;"></div>
 </div>
 
+<!-- OTP Modal -->
+<div id="otpModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:3000; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:20px; padding:24px; max-width:400px; width:90%; text-align:center;">
+    <h3 style="color:#ff6b35;margin-bottom:12px;" data-i18n="otp_title">🔐 Verification</h3>
+    <p style="font-size:14px;color:#666;margin-bottom:16px;" data-i18n="enter_otp">Enter OTP from customer</p>
+    <input type="tel" id="otpInput" maxlength="4" placeholder="0000" style="text-align:center;font-size:32px;letter-spacing:8px;padding:16px;border:2px solid #ff6b35;border-radius:12px;font-weight:700;">
+    <button class="btn-green" onclick="submitOTP()" data-i18n="verify" style="margin-top:16px;">Verify</button>
+    <button class="btn-secondary" onclick="resendOTPHandler()" data-i18n="resend_otp" style="margin-top:8px;">🔄 Resend OTP</button>
+    <button class="btn-red" onclick="closeOTPModal()" data-i18n="cancel" style="margin-top:8px;">Cancel</button>
+  </div>
+</div>
+
 <div id="chatModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:2000; align-items:flex-end;">
   <div style="background:#fff; width:100%; max-width:480px; margin:0 auto; border-radius:20px 20px 0 0; height:80vh; display:flex; flex-direction:column;">
     <div style="padding:14px 16px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
@@ -68,13 +80,15 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="i18n.js"></script>
-<script src="app.js?v=5"></script>
+<script src="i18n.js?v=10"></script>
+<script src="app.js?v=10"></script>
 <script>
 let allJobs = [], currentFilter = 'PENDING';
 let map = null, mapMarkers = [];
 let chatIntervalD = null, chatOpenD = false, currentChatBookingId = null;
 const activeShares = {};
+let currentOTPBookingId = null;
+let timerInterval = null;
 
 document.getElementById('driverName').value = localStorage.getItem('driverName') || '';
 
@@ -87,12 +101,6 @@ function saveDriver() {
 function updateDriverStats() {
   const name = localStorage.getItem('driverName');
   if (!name) return;
-  const mine = allJobs.filter(j => j.driver === name && j.status === 'COMPLETED');
-  const rev = mine.reduce((s, j) => s + Number(j.fare || 0), 0);
-  const rated = mine.filter(j => j.rating);
-  const avg = rated.length ? (rated.reduce((s, j) => s + Number(j.rating), 0) / rated.length).toFixed(1) : '—';
-  const statsEl = document.getElementById('driverStats');
-  if (statsEl) statsEl.innerHTML = `<strong>${name}</strong><br>✅ ${mine.length} ${t('rides')} • 💰 ₹${rev} • ⭐ ${avg}`;
 }
 
 function updateCommissionCard() {
@@ -104,10 +112,8 @@ function updateCommissionCard() {
   }
   const stats = getTodayCommissionForDriver(name, allJobs);
   if (stats.rides === 0) {
-    content.innerHTML = `
-      <div style="text-align:center;color:#666;">No rides completed today yet.</div>
-      <div style="margin-top:10px;font-size:12px;color:#999;">Owner UPI: <strong>${OWNER_UPI}</strong></div>
-    `;
+    content.innerHTML = `<div style="text-align:center;color:#666;">No rides today yet.</div>
+      <div style="margin-top:8px;font-size:12px;color:#999;text-align:center;">UPI: <strong>${OWNER_UPI}</strong></div>`;
     return;
   }
   const paid = localStorage.getItem('commissionPaid_' + new Date().toDateString()) === 'yes';
@@ -115,33 +121,28 @@ function updateCommissionCard() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
       <div><strong>Rides:</strong> ${stats.rides}</div>
       <div><strong>Earned:</strong> ₹${stats.totalEarned}</div>
-      <div><strong>You keep (90%):</strong> ₹${stats.keeps}</div>
-      <div><strong style="color:#ef4444;">Due (10%):</strong> ₹${stats.commission}</div>
+      <div><strong>You keep:</strong> ₹${stats.keeps}</div>
+      <div><strong style="color:#ef4444;">Due:</strong> ₹${stats.commission}</div>
     </div>
-    <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #ff6b35;">
-      <div style="font-size:12px;color:#666;">Send to UPI:</div>
-      <div style="font-size:14px;font-weight:700;color:#ff6b35;">${OWNER_UPI}</div>
-      <div style="font-size:12px;color:#666;margin-top:4px;">Amount: <strong>₹${stats.commission}</strong></div>
-    </div>
-    ${paid
-      ? '<div style="margin-top:12px;text-align:center;color:#22c55e;font-weight:700;">✅ Marked as sent today</div>'
-      : `<button class="btn-green" onclick="markAsSent(${stats.commission})" style="margin-top:12px;">✅ I've Sent ₹${stats.commission}</button>`
-    }
-  `;
+    <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #ff6b35;">
+      <div style="font-size:12px;color:#666;">Send to UPI: <strong>${OWNER_UPI}</strong></div>
+      ${paid
+        ? '<div style="margin-top:8px;text-align:center;color:#22c55e;font-weight:700;">✅ Marked sent today</div>'
+        : `<button class="btn-green" onclick="markAsSent(${stats.commission})" style="margin-top:8px;">✅ Sent ₹${stats.commission}</button>`
+      }
+    </div>`;
 }
 
 async function markAsSent(amount) {
   const name = localStorage.getItem('driverName');
   if (!name) { showToast('Enter your name first'); return; }
-  if (!confirm(`Confirm you sent ₹${amount} to ${OWNER_UPI}?`)) return;
+  if (!confirm(`Sent ₹${amount} to ${OWNER_UPI}?`)) return;
   try {
     await markCommissionPaid(name, amount);
     localStorage.setItem('commissionPaid_' + new Date().toDateString(), 'yes');
-    showToast('✅ Commission marked as sent. Thank you!');
+    showToast('✅ Marked as sent');
     updateCommissionCard();
-  } catch (e) {
-    showToast('Failed. Try again.');
-  }
+  } catch (e) { showToast('Failed'); }
 }
 
 function initAvailability() {
@@ -187,49 +188,200 @@ function renderJobs() {
       return;
     }
     jobs = allJobs.filter(j => j.status === 'PENDING');
-  } else if (currentFilter === 'ACCEPTED') jobs = allJobs.filter(j => j.status === 'ACCEPTED' && j.driver === driver);
+  } else if (currentFilter === 'ACCEPTED') {
+    jobs = allJobs.filter(j => (j.status === 'ACCEPTED' || j.status === 'AWAITING_OTP' || j.status === 'IN_PROGRESS') && j.driver === driver);
+  }
 
-  if (jobs.length === 0) { document.getElementById('jobsList').innerHTML = `<p style="text-align:center;color:#999;">${t('no_jobs')}</p>`; return; }
+  if (jobs.length === 0) {
+    document.getElementById('jobsList').innerHTML = `<p style="text-align:center;color:#999;">${t('no_jobs')}</p>`;
+    return;
+  }
 
-  document.getElementById('jobsList').innerHTML = jobs.reverse().map(j => `
-    <div class="card ${j.status.toLowerCase()}">
-      <span class="badge ${j.status.toLowerCase()}">${t(j.status.toLowerCase())}</span>
+  document.getElementById('jobsList').innerHTML = jobs.reverse().map(j => {
+    const isMine = j.driver === driver;
+    const cardClass = j.status === 'AWAITING_OTP' ? 'accepted' : j.status === 'IN_PROGRESS' ? 'accepted' : j.status.toLowerCase();
+    let actionButtons = '';
+    if (j.status === 'PENDING') {
+      actionButtons = `<div class="row"><button class="btn-green" onclick="acceptJob('${j.id}')">${t('accept')}</button></div>`;
+    } else if (j.status === 'ACCEPTED' && isMine) {
+      actionButtons = `
+        <div class="row">
+          <button class="btn-green" onclick="startRideHandler('${j.id}')">${t('start_ride')}</button>
+          <button class="btn-red" onclick="noShowHandler('${j.id}')">${t('no_show')}</button>
+        </div>
+        <div class="row">
+          <button class="btn-blue" onclick="toggleShareLocation('${j.id}', '${driver}')" id="shareBtn_${j.id}">${t('share_location')}</button>
+          <button class="btn-blue" onclick="openChatDriver('${j.id}')">${t('chat')}</button>
+        </div>`;
+    } else if (j.status === 'AWAITING_OTP' && isMine) {
+      actionButtons = `
+        <div class="card" style="background:#fff8f3;border-left-color:#f59e0b;margin:8px 0;">
+          <strong data-i18n="otp_title">🔐 Verification</strong><br>
+          <span style="font-size:12px;color:#666;">Waiting for customer OTP...</span>
+        </div>
+        <div class="row">
+          <button class="btn-green" onclick="openOTPModal('${j.id}')">${t('enter_otp')}</button>
+          <button class="btn-blue" onclick="resendOTPHandler2('${j.id}')">${t('resend_otp')}</button>
+        </div>
+        <div class="row">
+          <button class="btn-blue" onclick="openChatDriver('${j.id}')">${t('chat')}</button>
+        </div>`;
+    } else if (j.status === 'IN_PROGRESS' && isMine) {
+      const startTime = j.startTime || new Date().toISOString();
+      actionButtons = `
+        <div class="card" style="background:#f0fdf4;border-left-color:#22c55e;margin:8px 0;">
+          <strong>${t('ride_in_progress')}</strong><br>
+          <div style="font-size:13px;color:#666;margin-top:4px;">${t('started_at')}: ${new Date(startTime).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'})}</div>
+          <div style="font-size:24px;font-weight:700;color:#22c55e;text-align:center;margin-top:8px;" id="timer_${j.id}">00:00:00</div>
+        </div>
+        <div class="row">
+          <button class="btn-red" onclick="endRideHandler('${j.id}')">${t('end_ride')}</button>
+          <button class="btn-blue" onclick="openChatDriver('${j.id}')">${t('chat')}</button>
+        </div>`;
+    } else if (j.status === 'COMPLETED') {
+      actionButtons = `
+        <div class="card" style="background:#f0fdf4;border-left-color:#22c55e;">
+          <strong>${t('ride_completed_title')}</strong><br>
+          <div style="font-size:13px;">${t('duration')}: ${formatDuration(j.durationMins)}</div>
+          ${Number(j.extraCharge) > 0 ? `<div style="font-size:13px;color:#ef4444;">${t('extra_charge')}: +₹${j.extraCharge}</div>` : ''}
+          <div style="font-size:15px;font-weight:700;color:#ff6b35;margin-top:4px;">${t('total_fare')}: ₹${j.fare}</div>
+        </div>`;
+    }
+
+    return `
+    <div class="card ${cardClass}">
+      <span class="badge ${cardClass}">${t(j.status.toLowerCase()) || j.status}</span>
       <div style="margin-top:8px;">
         <strong>${j.name}</strong> — <a href="tel:${j.phone}">${j.phone}</a><br>
         📍 ${j.pickup} → ${j.drop}<br>
         🕐 ${new Date(j.datetime).toLocaleString('en-IN')}<br>
         🚗 ${j.car || '—'}<br>
         💰 ₹${j.fare} • ID: ${j.id}
-        ${j.rating ? `<br>⭐ ${j.rating}/5 ${j.review ? '— ' + j.review : ''}` : ''}
+        ${j.rating ? `<br>⭐ ${j.rating}/5` : ''}
       </div>
-      ${j.status === 'PENDING' ? `<div class="row"><button class="btn-green" onclick="acceptJob('${j.id}')">${t('accept')}</button></div>` : ''}
-      ${j.status === 'ACCEPTED' && j.driver === driver ? `
-        <div class="row">
-          <button class="btn-green" onclick="completeJob('${j.id}')">${t('mark_done')}</button>
-          <button class="btn-red" onclick="cancelJob('${j.id}')">${t('cancel')}</button>
-        </div>
-        <div class="row">
-          <button class="btn-blue" onclick="toggleShareLocation('${j.id}', '${driver}')" id="shareBtn_${j.id}">${t('share_location')}</button>
-          <button class="btn-blue" onclick="openChatDriver('${j.id}')">${t('chat')}</button>
-        </div>` : ''}
-    </div>
-  `).join('');
+      ${actionButtons}
+    </div>`;
+  }).join('');
+
+  // Start timers for active rides
+  jobs.filter(j => j.status === 'IN_PROGRESS' && j.driver === driver).forEach(j => {
+    startTimerDisplay(j.id, j.startTime);
+  });
+}
+
+function startTimerDisplay(bookingId, startTime) {
+  const el = document.getElementById('timer_' + bookingId);
+  if (!el) return;
+  const update = () => {
+    const elem = document.getElementById('timer_' + bookingId);
+    if (!elem) return;
+    elem.textContent = getElapsedTime(startTime);
+  };
+  update();
+  setInterval(update, 1000);
 }
 
 async function acceptJob(id) {
   const driver = localStorage.getItem('driverName');
   if (!driver) { showToast(t('enter_name_first')); return; }
   await updateBooking(id, 'ACCEPTED', driver);
-  showToast(t('job_accepted')); loadJobs();
+  showToast(t('job_accepted'));
+  loadJobs();
 }
-async function completeJob(id) {
-  const driver = localStorage.getItem('driverName');
-  await updateBooking(id, 'COMPLETED', driver);
-  showToast(t('ride_completed')); loadJobs();
+
+function startRideHandler(id) {
+  if (!confirm(t('start_ride_confirm'))) return;
+  startRideFlow(id);
 }
-async function cancelJob(id) {
-  await updateBooking(id, 'PENDING', '');
-  showToast(t('job_returned')); loadJobs();
+
+async function startRideFlow(id) {
+  try {
+    const res = await startRide(id);
+    if (res.ok) {
+      showToast(t('otp_title'));
+      currentOTPBookingId = id;
+      openOTPModal(id);
+      loadJobs();
+    } else {
+      showToast(res.error || 'Failed');
+    }
+  } catch (e) {
+    showToast('Error starting ride');
+  }
+}
+
+function openOTPModal(id) {
+  currentOTPBookingId = id;
+  document.getElementById('otpInput').value = '';
+  document.getElementById('otpModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('otpInput').focus(), 200);
+}
+
+function closeOTPModal() {
+  document.getElementById('otpModal').style.display = 'none';
+  currentOTPBookingId = null;
+}
+
+async function submitOTP() {
+  if (!currentOTPBookingId) return;
+  const otp = document.getElementById('otpInput').value.trim();
+  if (otp.length !== 4) { showToast('Enter 4-digit OTP'); return; }
+  const res = await verifyOTP(currentOTPBookingId, otp);
+  if (res.ok) {
+    showToast(t('otp_verified'));
+    closeOTPModal();
+    loadJobs();
+  } else {
+    showToast(res.error || t('wrong_otp'));
+  }
+}
+
+async function resendOTPHandler() {
+  if (!currentOTPBookingId) return;
+  const res = await resendOTP(currentOTPBookingId);
+  if (res.ok) {
+    showToast('New OTP sent to customer');
+  } else {
+    showToast('Failed to resend');
+  }
+}
+
+async function resendOTPHandler2(id) {
+  const res = await resendOTP(id);
+  if (res.ok) {
+    showToast('New OTP sent');
+    loadJobs();
+  }
+}
+
+function endRideHandler(id) {
+  if (!confirm(t('end_ride_confirm'))) return;
+  endRideFlow(id);
+}
+
+async function endRideFlow(id) {
+  try {
+    const res = await endRide(id);
+    if (res.ok) {
+      showToast(`${t('ride_completed_title')} — ${formatDuration(res.durationMins)}`);
+      if (Number(res.extraCharge) > 0) {
+        showToast(`Extra: ₹${res.extraCharge}`);
+      }
+      loadJobs();
+    } else {
+      showToast(res.error || 'Failed');
+    }
+  } catch (e) {
+    showToast('Error ending ride');
+  }
+}
+
+function noShowHandler(id) {
+  if (!confirm(t('confirm_no_show'))) return;
+  markNoShow(id).then(() => {
+    showToast('Marked as no-show');
+    loadJobs();
+  });
 }
 
 async function toggleMap() {

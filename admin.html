@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — Chennai Driver</title>
+<title>DriveEase Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="container">
-  <h1 data-i18n="admin_dashboard">📊 Admin Dashboard</h1>
+  <h1 data-i18n="admin_dashboard">📊 DriveEase Admin</h1>
   <p class="sub" data-i18n="admin_subtitle">All bookings & revenue</p>
 
   <a href="analytics.html" style="text-decoration:none;"><button class="btn-blue" style="margin-bottom:8px;">📈 View Analytics</button></a>
   <a href="leaderboard.html" style="text-decoration:none;"><button class="btn-blue" style="margin-bottom:8px;" data-i18n="view_leaderboard">🏆 View Leaderboard</button></a>
-  <a href="driver-onboard.html" style="text-decoration:none;"><button class="btn-blue" style="margin-bottom:8px;">📝 DriveEase Driver Signup Page</button></a>
+  <a href="driver-onboard.html" style="text-decoration:none;"><button class="btn-blue" style="margin-bottom:8px;">📝 Driver Registration Page</button></a>
 
   <div class="stats-grid" id="statsGrid"></div>
   <button onclick="loadAdmin()" data-i18n="refresh">🔄 Refresh</button>
@@ -25,12 +25,12 @@
   <h3 style="margin-top:20px;">✅ Approved Drivers</h3>
   <div id="approvedDrivers"></div>
 
-  <h3 data-i18n="all_bookings">All Bookings</h3>
+  <h3 data-i18n="all_bookings" style="margin-top:20px;">All Bookings</h3>
   <div id="adminList"></div>
 </div>
 
-<script src="i18n.js"></script>
-<script src="app.js"></script>
+<script src="i18n.js?v=10"></script>
+<script src="app.js?v=10"></script>
 <script>
 async function loadAdmin() {
   document.getElementById('adminList').innerHTML = `<div class="spinner">${t('loading')}</div>`;
@@ -44,9 +44,23 @@ async function loadAdmin() {
       <div class="stat-card"><div class="num" style="color:#22c55e;">${s.completed}</div><div class="lbl">${t('completed')}</div></div>
       <div class="stat-card"><div class="num" style="color:#ff6b35;">₹${s.revenue}</div><div class="lbl">${t('revenue')}</div></div>`;
   }
-  document.getElementById('adminList').innerHTML = bookings.reverse().map(b => `
+
+  document.getElementById('adminList').innerHTML = bookings.reverse().map(b => {
+    let rideInfo = '';
+    if (b.status === 'AWAITING_OTP' || b.status === 'IN_PROGRESS') {
+      rideInfo = `<div style="margin-top:6px;padding:6px;background:#fff8f3;border-radius:6px;font-size:12px;">
+        ${b.otp ? `🔐 OTP: <strong>${b.otp}</strong> | ` : ''}
+        ${b.startTime ? `Started: ${new Date(b.startTime).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'})}` : ''}
+      </div>`;
+    } else if (b.status === 'COMPLETED' && b.durationMins) {
+      rideInfo = `<div style="margin-top:6px;padding:6px;background:#f0fdf4;border-radius:6px;font-size:12px;">
+        ⏱️ Duration: <strong>${formatDuration(b.durationMins)}</strong>
+        ${Number(b.extraCharge) > 0 ? ` | Extra: ₹${b.extraCharge}` : ''}
+      </div>`;
+    }
+    return `
     <div class="card ${b.status.toLowerCase()}">
-      <span class="badge ${b.status.toLowerCase()}">${t(b.status.toLowerCase())}</span>
+      <span class="badge ${b.status.toLowerCase()}">${t(b.status.toLowerCase()) || b.status}</span>
       <strong style="margin-left:6px;">${b.id}</strong>
       <div style="margin-top:8px;">
         ${b.name} • <a href="tel:${b.phone}">${b.phone}</a><br>
@@ -54,7 +68,10 @@ async function loadAdmin() {
         ${new Date(b.datetime).toLocaleString('en-IN')} • ₹${b.fare}<br>
         ${t('driver_label')}: ${b.driver || '—'}${b.rating ? ` • ⭐ ${b.rating}` : ''}
       </div>
-    </div>`).join('') || `<p style="text-align:center;color:#999;">${t('no_bookings')}</p>`;
+      ${rideInfo}
+    </div>`;
+  }).join('') || `<p style="text-align:center;color:#999;">${t('no_bookings')}</p>`;
+
   loadDriverApps();
 }
 
@@ -79,9 +96,10 @@ async function loadDriverApps() {
         </div>
         <div style="margin-top:10px;padding-top:10px;border-top:1px dashed #ddd;">
           <strong>📎 Documents:</strong><br>
-          ${d.licenseUrl ? `📷 <a href="${d.licenseUrl}" target="_blank">View License</a><br>` : '<span style="color:#ef4444;">❌ License not uploaded</span><br>'}
-          ${d.aadhaarUrl ? `🆔 <a href="${d.aadhaarUrl}" target="_blank">View Aadhaar</a><br>` : '<span style="color:#ef4444;">❌ Aadhaar not uploaded</span><br>'}
-          ${d.selfieUrl ? `🤳 <a href="${d.selfieUrl}" target="_blank">View Selfie</a><br>` : '<span style="color:#999;">🤳 Selfie (optional) not uploaded</span><br>'}
+          ${d.licenseUrl ? `📷 <a href="${d.licenseUrl}" target="_blank">View License</a><br>` : '<span style="color:#ef4444;">❌ License missing</span><br>'}
+          ${d.aadhaarUrl ? `🆔 <a href="${d.aadhaarUrl}" target="_blank">View Aadhaar Front</a><br>` : '<span style="color:#ef4444;">❌ Aadhaar Front missing</span><br>'}
+          ${d.aadhaarBackUrl ? `🆔 <a href="${d.aadhaarBackUrl}" target="_blank">View Aadhaar Back</a><br>` : '<span style="color:#ef4444;">❌ Aadhaar Back missing</span><br>'}
+          ${d.selfieUrl ? `🤳 <a href="${d.selfieUrl}" target="_blank">View Selfie</a><br>` : '<span style="color:#999;">🤳 Selfie not uploaded</span><br>'}
           ${d.folderUrl ? `<br>📁 <a href="${d.folderUrl}" target="_blank">Open Full Folder in Drive</a>` : ''}
         </div>
         <div class="row">
@@ -105,7 +123,7 @@ async function loadDriverApps() {
 }
 
 async function approveDriver(id) {
-  if (!confirm('Approve this driver? They can start accepting rides.')) return;
+  if (!confirm('Approve this driver?')) return;
   await apiCall({ action: 'driverApprove', driverId: id, status: 'APPROVED', approvedBy: 'Admin' });
   showToast('✅ Driver approved');
   loadDriverApps();
