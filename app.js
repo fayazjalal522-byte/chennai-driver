@@ -1,6 +1,12 @@
-const API_URL = https://script.google.com/macros/s/AKfycbzmw001y6BVhUBfpujUDpQu87k5MSJSHgUa7lX0nuGVqHrGGo8sgCBYtI6ev2Cw2RO9gQ/exec';
+// ================================================================
+// YOUR CONFIGURATION
+// ================================================================
+const API_URL = 'https://script.google.com/macros/s/AKfycbzMWOO1y6BVhUBfpujUDpQu87k5MSJSHgUa7lX0nuGVqHrGGo8sgCBYtI6ev2Cw2R09gQ/exec';
 const BUSINESS_PHONE = '917845199014';
+const OWNER_UPI = 'Chennaiactingdriver@ybl';
+const COMMISSION_RATE = 0.10;
 
+// ---------------- API ----------------
 async function apiCall(payload) {
   const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain' } });
   return res.json();
@@ -16,7 +22,26 @@ async function getLeaderboard() { return apiCall({ action: 'leaderboard' }); }
 async function sendChatMessage(bookingId, sender, message) { return apiCall({ action: 'sendMessage', bookingId, sender, message }); }
 async function getChatMessages(bookingId) { const d = await apiCall({ action: 'getMessages', bookingId }); return d.messages || []; }
 async function getDriverLocation(bookingId) { return apiCall({ action: 'getLocation', bookingId }); }
+async function markCommissionPaid(driver, amount) { return apiCall({ action: 'commissionPaid', driver, amount }); }
+async function getCommissionStatus(date) { return apiCall({ action: 'commissionStatus', date }); }
 
+// ---------------- COMMISSION HELPERS ----------------
+function isToday(dateStr) {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+
+function getTodayCommissionForDriver(driverName, allJobs) {
+  const todayCompleted = allJobs.filter(j => j.driver === driverName && j.status === 'COMPLETED' && isToday(j.timestamp));
+  const totalEarned = todayCompleted.reduce((s, j) => s + Number(j.fare || 0), 0);
+  const commission = Math.round(totalEarned * COMMISSION_RATE);
+  const keeps = totalEarned - commission;
+  return { rides: todayCompleted.length, totalEarned, commission, keeps, jobs: todayCompleted };
+}
+
+// ---------------- TOAST ----------------
 function showToast(msg) {
   let t = document.getElementById('toast');
   if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; document.body.appendChild(t); }
@@ -25,6 +50,7 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+// ---------------- GEOCODING ----------------
 const geocodeCache = {};
 async function geocodeArea(name) {
   if (geocodeCache[name]) return geocodeCache[name];
@@ -41,6 +67,7 @@ async function geocodeArea(name) {
   return null;
 }
 
+// ---------------- GPS AUTO-DETECT ----------------
 const CHENNAI_AREAS = [
   { name: 'Adyar', lat: 13.0012, lng: 80.2565 },
   { name: 'Anna Nagar', lat: 13.0850, lng: 80.2101 },
@@ -78,12 +105,14 @@ async function autoDetectArea() {
   });
 }
 
+// ---------------- DRIVER AVAILABILITY ----------------
 function getDriverStatus() { return localStorage.getItem('driverStatus') || 'offline'; }
 function setDriverStatus(status) {
   localStorage.setItem('driverStatus', status);
   apiCall({ action: 'updateStatus', driver: localStorage.getItem('driverName') || '', status }).catch(() => {});
 }
 
+// ---------------- LOCATION SHARING ----------------
 let locationWatchId = null, locationInterval = null;
 
 async function shareDriverLocation(bookingId, driverName) {

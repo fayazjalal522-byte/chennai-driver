@@ -34,7 +34,12 @@
   <label data-i18n="your_name">Your Name</label>
   <input type="text" id="driverName" data-i18n-placeholder="enter_name" onchange="saveDriver()">
 
-  <div id="driverStats" class="card" style="background:#fff8f3;border-left-color:#ff6b35;"></div>
+  <div id="commissionCard" class="card" style="background:linear-gradient(135deg,#fff8f3,#ffe4cc);border-left-color:#ff6b35;">
+    <div style="font-size:13px;color:#666;margin-bottom:6px;">📅 TODAY'S EARNINGS</div>
+    <div id="commissionContent" style="font-size:14px;line-height:1.8;">
+      Enter your name above to see today's stats
+    </div>
+  </div>
 
   <div class="tabs">
     <button class="active" data-filter="PENDING" onclick="filterJobs('PENDING', this)" data-i18n="tab_new_jobs">New Jobs</button>
@@ -73,16 +78,70 @@ const activeShares = {};
 
 document.getElementById('driverName').value = localStorage.getItem('driverName') || '';
 
-function saveDriver() { localStorage.setItem('driverName', document.getElementById('driverName').value); updateDriverStats(); }
+function saveDriver() {
+  localStorage.setItem('driverName', document.getElementById('driverName').value);
+  updateDriverStats();
+  updateCommissionCard();
+}
 
 function updateDriverStats() {
   const name = localStorage.getItem('driverName');
-  if (!name) { document.getElementById('driverStats').innerHTML = '👋 ' + t('enter_name'); return; }
+  if (!name) return;
   const mine = allJobs.filter(j => j.driver === name && j.status === 'COMPLETED');
   const rev = mine.reduce((s, j) => s + Number(j.fare || 0), 0);
   const rated = mine.filter(j => j.rating);
   const avg = rated.length ? (rated.reduce((s, j) => s + Number(j.rating), 0) / rated.length).toFixed(1) : '—';
-  document.getElementById('driverStats').innerHTML = `<strong>${name}</strong><br>✅ ${mine.length} ${t('rides')} • 💰 ₹${rev} • ⭐ ${avg}`;
+  const statsEl = document.getElementById('driverStats');
+  if (statsEl) statsEl.innerHTML = `<strong>${name}</strong><br>✅ ${mine.length} ${t('rides')} • 💰 ₹${rev} • ⭐ ${avg}`;
+}
+
+function updateCommissionCard() {
+  const name = localStorage.getItem('driverName');
+  const content = document.getElementById('commissionContent');
+  if (!name) {
+    content.innerHTML = 'Enter your name above to see today\'s stats';
+    return;
+  }
+  const stats = getTodayCommissionForDriver(name, allJobs);
+  if (stats.rides === 0) {
+    content.innerHTML = `
+      <div style="text-align:center;color:#666;">No rides completed today yet.</div>
+      <div style="margin-top:10px;font-size:12px;color:#999;">Owner UPI: <strong>${OWNER_UPI}</strong></div>
+    `;
+    return;
+  }
+  const paid = localStorage.getItem('commissionPaid_' + new Date().toDateString()) === 'yes';
+  content.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div><strong>Rides:</strong> ${stats.rides}</div>
+      <div><strong>Earned:</strong> ₹${stats.totalEarned}</div>
+      <div><strong>You keep (90%):</strong> ₹${stats.keeps}</div>
+      <div><strong style="color:#ef4444;">Due (10%):</strong> ₹${stats.commission}</div>
+    </div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #ff6b35;">
+      <div style="font-size:12px;color:#666;">Send to UPI:</div>
+      <div style="font-size:14px;font-weight:700;color:#ff6b35;">${OWNER_UPI}</div>
+      <div style="font-size:12px;color:#666;margin-top:4px;">Amount: <strong>₹${stats.commission}</strong></div>
+    </div>
+    ${paid
+      ? '<div style="margin-top:12px;text-align:center;color:#22c55e;font-weight:700;">✅ Marked as sent today</div>'
+      : `<button class="btn-green" onclick="markAsSent(${stats.commission})" style="margin-top:12px;">✅ I've Sent ₹${stats.commission}</button>`
+    }
+  `;
+}
+
+async function markAsSent(amount) {
+  const name = localStorage.getItem('driverName');
+  if (!name) { showToast('Enter your name first'); return; }
+  if (!confirm(`Confirm you sent ₹${amount} to ${OWNER_UPI}?`)) return;
+  try {
+    await markCommissionPaid(name, amount);
+    localStorage.setItem('commissionPaid_' + new Date().toDateString(), 'yes');
+    showToast('✅ Commission marked as sent. Thank you!');
+    updateCommissionCard();
+  } catch (e) {
+    showToast('Failed. Try again.');
+  }
 }
 
 function initAvailability() {
@@ -106,7 +165,9 @@ function toggleAvailability() {
 async function loadJobs() {
   document.getElementById('jobsList').innerHTML = `<div class="spinner">${t('loading')}</div>`;
   allJobs = await listBookings();
-  updateDriverStats(); renderJobs();
+  updateDriverStats();
+  updateCommissionCard();
+  renderJobs();
 }
 
 function filterJobs(status, btn) {
