@@ -8,8 +8,12 @@ const COMMISSION_RATE = 0.10;
 
 // ---------------- API ----------------
 async function apiCall(payload) {
-  const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain' } });
-  return res.json();
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    redirect: 'follow'
+  });
 }
 
 async function createBooking(booking) { return apiCall({ action: 'book', ...booking }); }
