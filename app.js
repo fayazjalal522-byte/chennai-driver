@@ -1,19 +1,25 @@
 // ================================================================
 // YOUR CONFIGURATION
 // ================================================================
-const API_URL =  'https://script.google.com/macros/s/AKfycbzMWOO1y6BVhUBfpujUDpQu87k5MSJSHgUa7lX0nuGVqHrGGo8sgCBYtI6ev2Cw2R09gQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzmw001y6BVhUBfpujUDpQu87k5MSJSHgUa7lX0nuGVqHrGGo8sgCBYtI6ev2Cw2R09gQ/exec';                 
 const BUSINESS_PHONE = '917845199014';
 const OWNER_UPI = 'Chennaiactingdriver@ybl';
 const COMMISSION_RATE = 0.10;
 
 // ---------------- API ----------------
 async function apiCall(payload) {
+  const formData = new URLSearchParams();
+  formData.append('data', JSON.stringify(payload));
   const res = await fetch(API_URL, {
     method: 'POST',
-    body: JSON.stringify(payload),
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    redirect: 'follow'
+    body: formData
   });
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return { ok: false, error: 'Invalid response: ' + text.substring(0, 200) };
+  }
 }
 
 async function createBooking(booking) { return apiCall({ action: 'book', ...booking }); }
