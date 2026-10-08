@@ -39,7 +39,9 @@
     <select id="service" onchange="updatePrice()">
       <option value="hourly" data-i18n="svc_hourly">Hourly (₹500 for 4 hrs, +₹100/hr)</option>
       <option value="full_day" data-i18n="svc_full_day">Full Day (8 hrs) — ₹900</option>
-      <option value="outstation" data-i18n="svc_outstation">Outstation (₹5/km, min ₹1,500)</option>
+      <option value="local_round" data-i18n="svc_local_round">Local Round Trip (₹500 for 4 hrs, +₹100/hr)</option>
+      <option value="outstation" data-i18n="svc_outstation">Outstation (One-way, ₹5/km, min ₹1,500)</option>
+      <option value="outstation_round" data-i18n="svc_outstation_round">Outstation Round Trip (₹5/km, min ₹2,500)</option>
     </select>
 
     <div id="hoursField" style="display:none;">
@@ -57,7 +59,7 @@
     </div>
 
     <div id="kmField" style="display:none;">
-      <label data-i18n="total_km">Total Kilometers *</label>
+      <label id="kmLabel" data-i18n="total_km">Total Kilometers *</label>
       <input type="number" id="km" min="1" placeholder="e.g., 300" oninput="updatePrice()">
     </div>
 
@@ -143,12 +145,13 @@ function updatePrice() {
   const svc = document.getElementById('service').value;
   const hoursField = document.getElementById('hoursField');
   const kmField = document.getElementById('kmField');
+  const kmLabel = document.getElementById('kmLabel');
   let price = 500;
 
   hoursField.style.display = 'none';
   kmField.style.display = 'none';
 
-  if (svc === 'hourly') {
+  if (svc === 'hourly' || svc === 'local_round') {
     hoursField.style.display = 'block';
     const hrs = parseInt(document.getElementById('hours').value) || 4;
     if (hrs <= 4) price = 500;
@@ -157,11 +160,21 @@ function updatePrice() {
     price = 900;
   } else if (svc === 'outstation') {
     kmField.style.display = 'block';
+    kmLabel.textContent = 'Total Kilometers (one-way) *';
     const km = parseInt(document.getElementById('km').value) || 0;
     if (km > 0) {
       price = Math.max(km * 5, 1500);
     } else {
       price = 1500;
+    }
+  } else if (svc === 'outstation_round') {
+    kmField.style.display = 'block';
+    kmLabel.textContent = 'Total Kilometers (both ways) *';
+    const km = parseInt(document.getElementById('km').value) || 0;
+    if (km > 0) {
+      price = Math.max(km * 5, 2500);
+    } else {
+      price = 2500;
     }
   }
 
@@ -171,16 +184,21 @@ function updatePrice() {
 
 function getServiceDescription() {
   const svc = document.getElementById('service').value;
-  if (svc === 'hourly') {
+  if (svc === 'hourly' || svc === 'local_round') {
     const hrs = document.getElementById('hours').value;
-    const price = parseInt(document.getElementById('priceValue').textContent);
-    return `${hrs} hours — ₹${price}`;
+    const price = document.getElementById('priceValue').textContent;
+    const label = svc === 'local_round' ? 'Local Round Trip' : 'Hourly';
+    return `${label} — ${hrs} hours — ₹${price}`;
   } else if (svc === 'full_day') {
     return `Full Day (8 hrs) — ₹900`;
   } else if (svc === 'outstation') {
     const km = document.getElementById('km').value || 0;
-    const price = parseInt(document.getElementById('priceValue').textContent);
-    return `Outstation ${km} km — ₹${price}`;
+    const price = document.getElementById('priceValue').textContent;
+    return `Outstation One-way — ${km} km — ₹${price}`;
+  } else if (svc === 'outstation_round') {
+    const km = document.getElementById('km').value || 0;
+    const price = document.getElementById('priceValue').textContent;
+    return `Outstation Round Trip — ${km} km — ₹${price}`;
   }
   return '';
 }
@@ -216,7 +234,7 @@ async function bookDriver() {
   if (!name || phone.length !== 10 || !pickupEl.value || !drop || !datetime) {
     showToast(t('fill_fields')); return;
   }
-  if (svc === 'outstation' && !document.getElementById('km').value) {
+  if ((svc === 'outstation' || svc === 'outstation_round') && !document.getElementById('km').value) {
     showToast('Please enter total kilometers'); return;
   }
 

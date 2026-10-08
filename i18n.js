@@ -13,7 +13,9 @@ const TRANSLATIONS = {
     estimated_fare: "Estimated fare",
     svc_hourly: "Hourly (₹500 for 4 hrs, +₹100/hr)",
     svc_full_day: "Full Day (8 hrs) — ₹900",
-    svc_outstation: "Outstation (₹5/km, min ₹1,500)",
+    svc_local_round: "Local Round Trip (₹500 for 4 hrs, +₹100/hr)",
+    svc_outstation: "Outstation (One-way, ₹5/km, min ₹1,500)",
+    svc_outstation_round: "Outstation Round Trip (₹5/km, min ₹2,500)",
     hours_needed: "How many hours? *", total_km: "Total Kilometers *",
     book_now: "Book Driver Now", booking: "Booking...", book_another: "Book Another",
     share_whatsapp: "📱 Share on WhatsApp", pay_via_upi: "💳 Pay", pay_via_upi_suffix: "via UPI",
@@ -75,7 +77,9 @@ const TRANSLATIONS = {
     estimated_fare: "மதிப்பிடப்பட்ட கட்டணம்",
     svc_hourly: "மணிநேரம் (4 மணி ₹500, +₹100/மணி)",
     svc_full_day: "முழு நாள் (8 மணி) — ₹900",
-    svc_outstation: "வெளியூர் (₹5/கி.மீ, குறைந்தது ₹1,500)",
+    svc_local_round: "உள்ளூர் இருவழி (4 மணி ₹500, +₹100/மணி)",
+    svc_outstation: "வெளியூர் ஒருவழி (₹5/கி.மீ, குறைந்தது ₹1,500)",
+    svc_outstation_round: "வெளியூர் இருவழி (₹5/கி.மீ, குறைந்தது ₹2,500)",
     hours_needed: "எத்தனை மணி நேரம்? *", total_km: "மொத்த கிலோமீட்டர் *",
     book_now: "டிரைவரை பதிவு செய்யவும்", booking: "பதிவு செய்கிறது...", book_another: "மற்றொன்றை பதிவு செய்யவும்",
     share_whatsapp: "📱 WhatsApp இல் பகிரவும்", pay_via_upi: "💳 ₹ செலுத்தவும்", pay_via_upi_suffix: "UPI மூலம்",
@@ -110,4 +114,105 @@ const TRANSLATIONS = {
     notifications_denied: "அறிவிப்புகள் தடுக்கப்பட்டன", new_job_alert: "🚗 உங்கள் அருகில் புதிய வேலை!",
     leaderboard: "🏆 தரவரிசை", leaderboard_sub: "இந்த மாதத்தின் சிறந்த டிரைவர்கள்",
     no_data: "இந்த மாதம் தரவு இல்லை.", view_leaderboard: "🏆 தரவரிசையைப் பார்க்கவும்",
-    track_driver: "📍 டிர
+    track_driver: "📍 டிரைவரை கண்காணிக்கவும்", driver_en_route: "டிரைவர் வழியில் உள்ளார்",
+    share_location: "📍 என் இருப்பிடத்தை பகிரவும்", location_sharing_on: "📍 இருப்பிடம் பகிரப்படுகிறது",
+    location_sharing_off: "இருப்பிட பகிர்வு அணைக்கப்பட்டது",
+    last_updated: "{sec} விநாடிகளுக்கு முன் புதுப்பிக்கப்பட்டது", stop_tracking: "கண்காணிப்பை நிறுத்து",
+    chat: "💬 அரட்டை", chat_with_driver: "டிரைவருடன் அரட்டை", chat_with_customer: "வாடிக்கையாளருடன் அரட்டை",
+    type_message: "செய்தியை உள்ளிடவும்...", send: "அனுப்பு",
+    no_messages: "இன்னும் செய்திகள் இல்லை. வணக்கம் சொல்லுங்கள்! 👋", you: "நீங்கள்",
+    rank: "தரவரிசை", driver_name: "டிரைவர்", month_rides: "சவாரிகள்", month_earnings: "வருவாய்", avg_rating: "மதிப்பீடு"
+  },
+  tg: {
+    app_title: "🚗 Chennai Driver", app_subtitle: "Nambikkaana drivers • Fixed rate • 24/7",
+    driver_dashboard: "🚙 Driver Dashboard", driver_subtitle: "Pakathula irukkura ride-a accept pannunga",
+    admin_dashboard: "📊 Admin Dashboard", admin_subtitle: "Ella booking-um revenue-um",
+    your_name: "Unga Peru", your_name_required: "Unga Peru *", full_name: "Full name",
+    phone: "Phone Number", phone_required: "Phone Number *", phone_placeholder: "10 digit mobile",
+    pickup: "Pickup Place (Chennai)", pickup_required: "Pickup Place (Chennai) *",
+    select_area: "-- Area select pannunga --", drop: "Drop Place", drop_required: "Drop Place *",
+    drop_placeholder: "Enga poganum?", service_type: "Service Type", service_required: "Service Type *",
+    date_time: "Date & Time", date_time_required: "Date & Time *",
+    car_model: "Car Model (venum-na)", car_placeholder: "udaharanam: Swift Dzire, Innova",
+    estimated_fare: "Approximate fare",
+    svc_hourly: "Hourly (4 hrs ₹500, +₹100/hr)",
+    svc_full_day: "Full Day (8 hrs) — ₹900",
+    svc_local_round: "Local Round Trip (4 hrs ₹500, +₹100/hr)",
+    svc_outstation: "Outstation One-way (₹5/km, min ₹1,500)",
+    svc_outstation_round: "Outstation Round Trip (₹5/km, min ₹2,500)",
+    hours_needed: "Ethana hours venum? *", total_km: "Total KM *",
+    book_now: "Driver Book Pannunga", booking: "Booking aaguthu...", book_another: "Innoru Booking",
+    share_whatsapp: "📱 WhatsApp-la Share Pannunga", pay_via_upi: "💳 ₹ Pay Pannunga", pay_via_upi_suffix: "UPI moolama",
+    refresh: "🔄 Refresh Pannunga", show_map: "🗺️ Map Kaattunga", accept: "Accept Pannunga",
+    mark_done: "Mudinjathaa Mark Pannunga", cancel: "Cancel Pannunga", submit_rating: "Rating Anuppunga", ive_paid: "✅ Naan Pay Panniten",
+    tab_new_jobs: "Pudhu Velai", tab_my_rides: "En Rides", tab_all: "Ellame",
+    booking_confirmed: "✅ Booking Confirm Aayiduchu!",
+    received_booking: "Vanakkam {name}, unga booking-ku vandhuruchu.",
+    booking_id: "Booking ID", when: "Eppo", fare: "Fare",
+    driver_will_call: "Enga driver 5 nimishathula unga-ku call pannuvaanga.",
+    scan_to_pay: "Pay Panna Scan Pannunga", scan_hint: "PhonePe / GPay / Paytm open panni scan pannunga",
+    generating_qr: "QR generate aaguthu...", online_not_configured: "Online payment set aagala.",
+    pay_cash: "Driver-ku {amount} cash-a kudunga.",
+    rate_driver: "⭐ Unga Driver-ku Rating Kudunga", feedback_placeholder: "Edhavadhu feedback? (venum-na)",
+    thanks_feedback: "⭐ Unga feedback-ku nandri!", select_rating: "Rating select pannunga",
+    enter_name: "Unga peru type pannunga", rides: "rides", rated: "rated",
+    no_jobs: "Inga velai illa.", loading: "Load aaguthu...", enter_name_first: "Modhalla unga peru podunga",
+    job_accepted: "✅ Velai accept aayiduchu", ride_completed: "🎉 Ride mudinjuchu", job_returned: "Velai thirumbi pochu",
+    pending: "Niluvaila", active: "Nadapula", completed: "Mudinjiduchu", revenue: "Varumaanam",
+    all_bookings: "Ella Bookings-um", no_bookings: "Booking illa.", driver_label: "Driver",
+    or_call: "Illana call pannunga", or: "Illana",
+    fill_fields: "Ella field-um fill pannunga (10 digit phone)",
+    booking_failed: "Booking fail aayiduchu. Direct-a call pannunga.",
+    payment_noted: "✅ Nandri! Payment note panniten.",
+    detect_location: "📍 En Area Detect Pannunga", detecting: "Detect aaguthu...",
+    location_found: "Location kandupidichuten", location_denied: "Location access illa. Manual-a select pannunga.",
+    location_failed: "Location detect aagala. Manual-a select pannunga.",
+    availability: "Availability", online: "Online", offline: "Offline",
+    you_are_online: "🟢 Neenga Online-la irukeenga", you_are_offline: "🔴 Neenga Offline-la irukeenga",
+    offline_hint: "Job request vaanga online ponga",
+    enable_notifications: "🔔 Notifications On Pannunga", notifications_enabled: "🔔 Notifications on aayiduchu",
+    notifications_denied: "Notifications block aayiduchu", new_job_alert: "🚗 Unga pakathula pudhu velai!",
+    leaderboard: "🏆 Leaderboard", leaderboard_sub: "Indha maasam top drivers",
+    no_data: "Indha maasam data illa.", view_leaderboard: "🏆 Leaderboard Paakkalaam",
+    track_driver: "📍 Driver-a Track Pannunga", driver_en_route: "Driver vandhutu irukaaru",
+    share_location: "📍 En Location Share Pannunga", location_sharing_on: "📍 Location share aaguthu",
+    location_sharing_off: "Location sharing off",
+    last_updated: "{sec}s munnaadi update aachu", stop_tracking: "Tracking Nippattu",
+    chat: "💬 Chat", chat_with_driver: "Driver-kitta Chat", chat_with_customer: "Customer-kitta Chat",
+    type_message: "Message type pannunga...", send: "Anuppu",
+    no_messages: "Innum message illa. Hi sollunga! 👋", you: "Neenga",
+    rank: "Rank", driver_name: "Driver", month_rides: "Rides", month_earnings: "Sambaadhanam", avg_rating: "Rating"
+  }
+};
+
+const LANG_NAMES = { en: "English", ta: "தமிழ்", tg: "Tanglish" };
+
+function getLang() { return localStorage.getItem('lang') || 'en'; }
+function setLang(lang) { localStorage.setItem('lang', lang); applyTranslations(); updateSwitcherUI(); }
+function t(key, params = {}) {
+  const lang = getLang();
+  let str = (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
+  Object.keys(params).forEach(k => { str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), params[k]); });
+  return str;
+}
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
+  document.documentElement.lang = getLang() === 'ta' ? 'ta' : 'en';
+}
+function renderSwitcher() {
+  const current = getLang();
+  const bar = document.createElement('div');
+  bar.className = 'lang-switcher';
+  bar.innerHTML = Object.keys(LANG_NAMES).map(code =>
+    `<button class="lang-btn ${code === current ? 'active' : ''}" onclick="setLang('${code}')">${LANG_NAMES[code]}</button>`
+  ).join('');
+  document.body.insertBefore(bar, document.body.firstChild);
+}
+function updateSwitcherUI() {
+  const current = getLang();
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.trim() === LANG_NAMES[current]);
+  });
+}
+document.addEventListener('DOMContentLoaded', () => { renderSwitcher(); applyTranslations(); });
