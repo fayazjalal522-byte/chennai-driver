@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Chennai Driver</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h1 data-i18n="admin_dashboard">📊 Admin Dashboard</h1>
+  <p class="sub" data-i18n="admin_subtitle">All bookings & revenue</p>
+
+  <a href="analytics.html" style="text-decoration:none;"><button class="btn-blue" style="margin-bottom:8px;">📈 View Analytics</button></a>
+  <a href="leaderboard.html" style="text-decoration:none;"><button class="btn-blue" style="margin-bottom:8px;" data-i18n="view_leaderboard">🏆 View Leaderboard</button></a>
+  <a href="driver-onboard.html" style="text-decoration:none;"><button class="btn-blue" style="margin-bottom:8px;">📝 Driver Registration Page</button></a>
+
+  <div class="stats-grid" id="statsGrid"></div>
+  <button onclick="loadAdmin()" data-i18n="refresh">🔄 Refresh</button>
+
+  <h3>Pending Driver Applications</h3>
+  <div id="driverApps"></div>
+
+  <h3 data-i18n="all_bookings">All Bookings</h3>
+  <div id="adminList"></div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+<script>
+async function loadAdmin() {
+  document.getElementById('adminList').innerHTML = `<div class="spinner">${t('loading')}</div>`;
+  const res = await getStats();
+  const bookings = await listBookings();
+  if (res.ok) {
+    const s = res.stats;
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card"><div class="num" style="color:#f59e0b;">${s.pending}</div><div class="lbl">${t('pending')}</div></div>
+      <div class="stat-card"><div class="num" style="color:#3b82f6;">${s.accepted}</div><div class="lbl">${t('active')}</div></div>
+      <div class="stat-card"><div class="num" style="color:#22c55e;">${s.completed}</div><div class="lbl">${t('completed')}</div></div>
+      <div class="stat-card"><div class="num" style="color:#ff6b35;">₹${s.revenue}</div><div class="lbl">${t('revenue')}</div></div>`;
+  }
+  document.getElementById('adminList').innerHTML = bookings.reverse().map(b => `
+    <div class="card ${b.status.toLowerCase()}">
+      <span class="badge ${b.status.toLowerCase()}">${t(b.status.toLowerCase())}</span>
+      <strong style="margin-left:6px;">${b.id}</strong>
+      <div style="margin-top:8px;">
+        ${b.name} • <a href="tel:${b.phone}">${b.phone}</a><br>
+        ${b.pickup} → ${b.drop}<br>
+        ${new Date(b.datetime).toLocaleString('en-IN')} • ₹${b.fare}<br>
+        ${t('driver_label')}: ${b.driver || '—'}${b.rating ? ` • ⭐ ${b.rating}` : ''}
+      </div>
+    </div>`).join('') || `<p style="text-align:center;color:#999;">${t('no_bookings')}</p>`;
+  loadDriverApps();
+}
+
+async function loadDriverApps() {
+  const res = await apiCall({ action: 'driverList' });
+  if (!res.ok) return;
+  const pending = res.drivers.filter(d => d.status === 'PENDING');
+  const approved = res.drivers.filter(d => d.status === 'APPROVED');
+  document.getElementById('driverApps').innerHTML =
+    (pending.length === 0 ? '<p style="color:#999;">No pending applications.</p>' :
+    pending.map(d => `
+      <div class="card pending">
+        <span class="badge pending">PENDING</span>
+        <div style="margin-top:8px;">
+          <strong>${d.name}</strong> — <a href="tel:${d.phone}">${d.phone}</a><br>
+          License: ${d.licenseNo} • Vehicle: ${d.vehicle}<br>Area: ${d.area}
+        </div>
+        <div class="row">
+          <button class="btn-green" onclick="approveDriver('${d.id}')">✅ Approve</button>
+          <button class="btn-red" onclick="rejectDriver('${d.id}')">❌ Reject</button>
+        </div>
+      </div>`).join('')) +
+    `<h3 style="margin-top:20px;">Approved Drivers (${approved.length})</h3>` +
+    approved.map(d => `<div class="card completed"><span class="badge completed">APPROVED</span><div style="margin-top:8px;"><strong>${d.name}</strong> — ${d.phone}</div></div>`).join('');
+}
+
+async function approveDriver(id) {
+  await apiCall({ action: 'driverApprove', driverId: id, status: 'APPROVED', approvedBy: 'Admin' });
+  showToast('✅ Driver approved'); loadAdmin();
+}
+async function rejectDriver(id) {
+  if (!confirm('Reject this driver?')) return;
+  await apiCall({ action: 'driverApprove', driverId: id, status: 'REJECTED', approvedBy: 'Admin' });
+  showToast('Driver rejected'); loadAdmin();
+}
+loadAdmin();
+setInterval(loadAdmin, 60000);
+</script>
+</body>
+</html>

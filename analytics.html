@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📈 Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h1>📈 Analytics Dashboard</h1>
+  <p class="sub">Business insights — auto-refreshed</p>
+  <button onclick="loadAnalytics()">🔄 Refresh</button>
+  <div class="kpi-row" id="kpiRow"></div>
+  <div class="chart-container"><h3>📊 Bookings by Hour</h3><div id="hourChart"></div></div>
+  <div class="chart-container"><h3>📅 Bookings by Day</h3><div id="dayChart"></div></div>
+  <div class="chart-container"><h3>💰 Revenue by Service</h3><div id="serviceChart"></div></div>
+  <div class="chart-container"><h3>🗺️ Pickup Area Heatmap</h3><div id="heatmap"></div></div>
+  <div class="chart-container"><h3>⭐ Top 5 Drivers</h3><div id="topDrivers"></div></div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+<script>
+let heatMap = null;
+function getHour(ts) { const d = new Date(ts); return isNaN(d) ? null : d.getHours(); }
+function getDay(ts) { const d = new Date(ts); return isNaN(d) ? null : d.getDay(); }
+
+async function loadAnalytics() {
+  const bookings = await listBookings();
+  if (!bookings || bookings.length === 0) {
+    document.getElementById('kpiRow').innerHTML = '<p style="text-align:center;color:#999;">No bookings yet.</p>'; return;
+  }
+  const total = bookings.length;
+  const completed = bookings.filter(b => b.status === 'COMPLETED');
+  const revenue = completed.reduce((s, b) => s + Number(b.fare || 0), 0);
+  const avgFare = completed.length > 0 ? Math.round(revenue / completed.length) : 0;
+  const completionRate = total > 0 ? Math.round((completed.length / total) * 100) : 0;
+  const rated = completed.filter(b => b.rating);
+  const avgRating = rated.length > 0 ? (rated.reduce((s, b) => s + Number(b.rating), 0) / rated.length).toFixed(1) : '—';
+
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi"><div class="v">${total}</div><div class="l">Total Bookings</div></div>
+    <div class="kpi"><div class="v">₹${revenue}</div><div class="l">Revenue</div></div>
+    <div class="kpi"><div class="v">${completionRate}%</div><div class="l">Completion</div></div>
+    <div class="kpi"><div class="v">${avgRating}</div><div class="l">Avg Rating</div></div>
+    <div class="kpi"><div class="v">₹${avgFare}</div><div class="l">Avg Fare</div></div>
+    <div class="kpi"><div class="v">${rated.length}</div><div class="l">Reviews</div></div>`;
+
+  const hourCounts = Array(24).fill(0);
+  bookings.forEach(b => { const h = getHour(b.timestamp); if (h !== null) hourCounts[h]++; });
+  const maxHour = Math.max(...hourCounts, 1);
+  document.getElementById('hourChart').innerHTML = hourCounts.map((c, h) => {
+    if (c === 0) return '';
+    const w = (c / maxHour) * 100;
+    return `<div class="bar-row"><div class="bar-label">${h.toString().padStart(2, '0')}:00</div><div class="bar-fill" style="width:${w}%"></div><div class="bar-value">${c}</div></div>`;
+  }).join('') || '<p style="color:#999;">No data</p>';
+
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayCounts = Array(7).fill(0);
+  bookings.forEach(b => { const d = getDay(b.timestamp); if (d !== null) dayCounts[d]++; });
+  const maxDay = Math.max(...dayCounts, 1);
+  document.getElementById('dayChart').innerHTML = dayNames.map((name, i) => {
+    const c = dayCounts[i]; const w = (c / maxDay) * 100;
+    return `<div class="bar-row"><div class="bar-label">${name}</div><div class="bar-fill" style="width:${w}%"></div><div class="bar-value">${c}</div></div>`;
+  }).join('');
+
+  const svcRevenue = {};
+  completed.forEach(b => { const svc = b.service || 'Unknown'; svcRevenue[svc] = (svcRevenue[svc] || 0) + Number(b.fare || 0); });
+  const maxSvc = Math.max(...Object.values(svcRevenue), 1);
+  document.getElementById('serviceChart').innerHTML = Object.keys(svcRevenue).sort((a,b) => svcRevenue[b] - svcRevenue[a]).map(svc => {
+    const rev = svcRevenue[svc]; const w = (rev / maxSvc) * 100;
+    return `<div class="bar-row"><div class="bar-label" style="width:auto;flex:1;min-width:120px;">${svc}</div><div class="bar-fill" style="width:${w}%;max-width:200px;"></div><div class="bar-value">₹${rev}</div></div>`;
+  }).join('') || '<p style="color:#999;">No data</p>';
+
+  const driverCounts = {};
+  completed.forEach(b => { const d = b.driver || 'Unknown'; if (!driverCounts[d]) driverCounts[d] = { rides: 0, revenue: 0 }; driverCounts[d].rides++; driverCounts[d].revenue += Number(b.fare || 0); });
+  const topDrivers = Object.entries(driverCounts).sort((a, b) => b[1].rides - a[1].rides).slice(0, 5);
+  document.getElementById('topDrivers').innerHTML = topDrivers.map(([name, data], i) => `
+    <div class="bar-row"><div class="bar-label" style="width:30px;font-weight:700;color:#ff6b35;">#${i+1}</div><div style="flex:1;font-weight:600;">${name}</div><div style="color:#666;font-size:12px;">${data.rides} rides • ₹${data.revenue}</div></div>`).join('') || '<p style="color:#999;">No data</p>';
+
+  if (!heatMap) { heatMap = L.map('heatmap').setView([13.0827, 80.2707], 11); L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(heatMap); }
+  setTimeout(() => heatMap.invalidateSize(), 100);
+  heatMap.eachLayer(l => { if (l instanceof L.CircleMarker) heatMap.removeLayer(l); });
+  const areaCounts = {};
+  bookings.forEach(b => { const area = b.pickup || 'Unknown'; areaCounts[area] = (areaCounts[area] || 0) + 1; });
+  const maxArea = Math.max(...Object.values(areaCounts), 1);
+  for (const area of Object.keys(areaCounts)) {
+    const coords = await geocodeArea(area);
+    if (!coords) continue;
+    const intensity = areaCounts[area] / maxArea;
+    const radius = 8 + intensity * 20;
+    const color = intensity > 0.7 ? '#ef4444' : intensity > 0.4 ? '#f59e0b' : '#22c55e';
+    L.circleMarker([coords.lat, coords.lng], { radius, color, fillColor: color, fillOpacity: 0.5, weight: 2 })
+      .addTo(heatMap).bindPopup(`<b>${area}</b><br>${areaCounts[area]} bookings`);
+    await new Promise(r => setTimeout(r, 1100));
+  }
+}
+loadAnalytics();
+</script>
+</body>
+</html>

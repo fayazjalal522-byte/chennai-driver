@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Driver Registration</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <div id="formView">
+    <h1>🎯 Become a Driver</h1>
+    <p class="sub">Join Chennai's fastest-growing driver network</p>
+    <div class="card" style="background:#f0fdf4;border-left-color:#22c55e;font-size:13px;">
+      <strong>💰 Earn ₹500–1,500 per booking</strong><br>
+      ✅ Weekly UPI payout<br>
+      ✅ Flexible timing<br>
+      ✅ No investment needed
+    </div>
+    <label>Full Name *</label>
+    <input type="text" id="name" placeholder="As per license">
+    <label>Phone Number *</label>
+    <input type="tel" id="phone" maxlength="10" placeholder="10-digit mobile">
+    <label>Driving License Number *</label>
+    <input type="text" id="licenseNo" placeholder="TN0120180012345" style="text-transform:uppercase;">
+    <label>Aadhaar Last 4 Digits *</label>
+    <input type="text" id="aadhaarLast4" maxlength="4" pattern="[0-9]{4}" placeholder="XXXX">
+    <label>Vehicle You Can Drive *</label>
+    <select id="vehicle">
+      <option value="">-- Select --</option>
+      <option>Manual Car</option><option>Automatic Car</option>
+      <option>Both Manual & Automatic</option><option>SUV / MUV</option><option>Luxury Cars</option>
+    </select>
+    <label>Years of Experience *</label>
+    <select id="experience">
+      <option value="">-- Select --</option>
+      <option>1–2 years</option><option>3–5 years</option>
+      <option>5–10 years</option><option>10+ years</option>
+    </select>
+    <label>Preferred Area (Chennai) *</label>
+    <select id="area">
+      <option value="">-- Select --</option>
+      <option>Adyar</option><option>Anna Nagar</option><option>T. Nagar</option>
+      <option>Velachery</option><option>OMR / Sholinganallur</option>
+      <option>Tambaram</option><option>Porur</option><option>Mylapore</option>
+      <option>Egmore</option><option>Central Chennai</option>
+      <option>Airport Zone</option><option>Any Area</option>
+    </select>
+    <div style="font-size:12px;color:#666;margin-top:16px;line-height:1.5;">
+      By submitting, you agree to background verification and our terms.
+    </div>
+    <button onclick="submitApplication()" id="submitBtn">Submit Application</button>
+    <div class="contact">Questions? <a href="tel:+919876543210">Call us</a></div>
+  </div>
+  <div class="success" id="successView">
+    <h2>🎉 Application Received!</h2>
+    <p id="confirmMsg"></p>
+    <div class="card" id="appCard"></div>
+    <p style="font-size:13px;color:#666;margin-top:16px;">Our team will contact you within <strong>24 hours</strong>.</p>
+    <button class="btn-secondary" onclick="location.reload()">Submit Another</button>
+  </div>
+</div>
+<script src="app.js"></script>
+<script>
+async function submitApplication() {
+  const name = document.getElementById('name').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const licenseNo = document.getElementById('licenseNo').value.trim().toUpperCase();
+  const aadhaarLast4 = document.getElementById('aadhaarLast4').value.trim();
+  const vehicle = document.getElementById('vehicle').value;
+  const experience = document.getElementById('experience').value;
+  const area = document.getElementById('area').value;
+  if (!name || phone.length !== 10 || !licenseNo || aadhaarLast4.length !== 4 || !vehicle || !experience || !area) {
+    showToast('Please fill all required fields correctly'); return;
+  }
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+  try {
+    const res = await apiCall({ action: 'driverApply', name, phone, licenseNo, aadhaarLast4, vehicle, experience, area });
+    if (res.ok) {
+      document.getElementById('formView').style.display = 'none';
+      document.getElementById('successView').style.display = 'block';
+      document.getElementById('confirmMsg').innerHTML = `Thanks <strong>${name}</strong>!`;
+      document.getElementById('appCard').innerHTML = `<strong>Application ID:</strong> ${res.driverId}<br><strong>Status:</strong> <span style="color:#f59e0b;">PENDING</span>`;
+    } else { showToast(res.error || 'Application failed'); btn.disabled = false; btn.textContent = 'Submit Application'; }
+  } catch (e) { showToast('Failed. Please call us'); btn.disabled = false; btn.textContent = 'Submit Application'; }
+}
+</script>
+</body>
+</html>

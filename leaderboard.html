@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏆 Leaderboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h1 data-i18n="leaderboard">🏆 Leaderboard</h1>
+  <p class="sub" data-i18n="leaderboard_sub">Top drivers this month</p>
+  <p style="text-align:center; font-weight:600; color:#ff6b35;" id="monthLabel"></p>
+  <button onclick="loadLeaderboard()" data-i18n="refresh">🔄 Refresh</button>
+  <div id="boardList" style="margin-top:16px;"></div>
+</div>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+<script>
+async function loadLeaderboard() {
+  document.getElementById('boardList').innerHTML = `<div class="spinner">${t('loading')}</div>`;
+  const res = await getLeaderboard();
+  if (!res.ok || res.drivers.length === 0) {
+    document.getElementById('boardList').innerHTML = `<p style="text-align:center;color:#999;">${t('no_data')}</p>`; return;
+  }
+  document.getElementById('monthLabel').textContent = res.month;
+  const medals = ['🥇', '🥈', '🥉'];
+  document.getElementById('boardList').innerHTML = res.drivers.map((d, i) => `
+    <div class="card ${i === 0 ? 'completed' : ''}" style="${i === 0 ? 'background:linear-gradient(135deg,#fff8f3,#ffe4cc);' : ''}">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <strong style="font-size:16px;">${medals[i] || '#' + (i + 1)} ${d.name}</strong>
+          <div style="font-size:12px; color:#666; margin-top:4px;">${d.rides} ${t('month_rides')} • ⭐ ${d.avgRating}</div>
+        </div>
+        <div style="font-size:20px; font-weight:700; color:#ff6b35;">₹${d.revenue}</div>
+      </div>
+    </div>`).join('');
+}
+loadLeaderboard();
+</script>
+</body>
+</html>

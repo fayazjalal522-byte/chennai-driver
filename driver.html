@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Driver Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h1 data-i18n="driver_dashboard">🚙 Driver Dashboard</h1>
+  <p class="sub" data-i18n="driver_subtitle">Accept rides near you</p>
+
+  <a href="leaderboard.html" style="text-decoration:none;">
+    <button class="btn-blue" data-i18n="view_leaderboard" style="margin-bottom:12px;">🏆 View Leaderboard</button>
+  </a>
+
+  <div id="availabilityBox" class="card" style="background:#fff;border-left:4px solid #22c55e;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <strong data-i18n="availability">Availability</strong><br>
+        <span id="availStatusText" style="font-size:13px;color:#666;"></span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="availToggle" onchange="toggleAvailability()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <label data-i18n="your_name">Your Name</label>
+  <input type="text" id="driverName" data-i18n-placeholder="enter_name" onchange="saveDriver()">
+
+  <div id="driverStats" class="card" style="background:#fff8f3;border-left-color:#ff6b35;"></div>
+
+  <div class="tabs">
+    <button class="active" data-filter="PENDING" onclick="filterJobs('PENDING', this)" data-i18n="tab_new_jobs">New Jobs</button>
+    <button data-filter="ACCEPTED" onclick="filterJobs('ACCEPTED', this)" data-i18n="tab_my_rides">My Rides</button>
+    <button data-filter="ALL" onclick="filterJobs('ALL', this)" data-i18n="tab_all">All</button>
+  </div>
+
+  <button onclick="loadJobs()" data-i18n="refresh">🔄 Refresh</button>
+  <button class="btn-blue" onclick="toggleMap()" data-i18n="show_map">🗺️ Show Map</button>
+  <div id="map"></div>
+  <div id="jobsList" style="margin-top:16px;"></div>
+</div>
+
+<div id="chatModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:2000; align-items:flex-end;">
+  <div style="background:#fff; width:100%; max-width:480px; margin:0 auto; border-radius:20px 20px 0 0; height:80vh; display:flex; flex-direction:column;">
+    <div style="padding:14px 16px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+      <strong data-i18n="chat_with_customer">Chat with Customer</strong>
+      <button onclick="toggleChatDriver()" style="width:auto; background:transparent; color:#666; font-size:20px; padding:4px 12px; margin:0;">✕</button>
+    </div>
+    <div id="chatMessages" style="flex:1; overflow-y:auto; padding:14px; background:#f9f9f9;"></div>
+    <div style="padding:10px; border-top:1px solid #eee; display:flex; gap:8px;">
+      <input type="text" id="chatInput" data-i18n-placeholder="type_message" style="flex:1;" onkeydown="if(event.key==='Enter')sendChatDriver()">
+      <button onclick="sendChatDriver()" style="width:auto; padding:10px 16px; margin:0;" data-i18n="send">Send</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+<script>
+let allJobs = [], currentFilter = 'PENDING';
+let map = null, mapMarkers = [];
+let chatIntervalD = null, chatOpenD = false, currentChatBookingId = null;
+const activeShares = {};
+
+document.getElementById('driverName').value = localStorage.getItem('driverName') || '';
+
+function saveDriver() { localStorage.setItem('driverName', document.getElementById('driverName').value); updateDriverStats(); }
+
+function updateDriverStats() {
+  const name = localStorage.getItem('driverName');
+  if (!name) { document.getElementById('driverStats').innerHTML = '👋 ' + t('enter_name'); return; }
+  const mine = allJobs.filter(j => j.driver === name && j.status === 'COMPLETED');
+  const rev = mine.reduce((s, j) => s + Number(j.fare || 0), 0);
+  const rated = mine.filter(j => j.rating);
+  const avg = rated.length ? (rated.reduce((s, j) => s + Number(j.rating), 0) / rated.length).toFixed(1) : '—';
+  document.getElementById('driverStats').innerHTML = `<strong>${name}</strong><br>✅ ${mine.length} ${t('rides')} • 💰 ₹${rev} • ⭐ ${avg}`;
+}
+
+function initAvailability() {
+  const status = getDriverStatus();
+  const toggle = document.getElementById('availToggle');
+  const text = document.getElementById('availStatusText');
+  toggle.checked = (status === 'online');
+  text.innerHTML = toggle.checked ? `<span class="status-online">${t('you_are_online')}</span>` : `<span class="status-offline">${t('you_are_offline')}</span>`;
+}
+
+function toggleAvailability() {
+  const toggle = document.getElementById('availToggle');
+  const status = toggle.checked ? 'online' : 'offline';
+  const text = document.getElementById('availStatusText');
+  setDriverStatus(status);
+  text.innerHTML = status === 'online' ? `<span class="status-online">${t('you_are_online')}</span>` : `<span class="status-offline">${t('you_are_offline')}</span>`;
+  showToast(status === 'online' ? t('you_are_online') : t('you_are_offline'));
+  renderJobs();
+}
+
+async function loadJobs() {
+  document.getElementById('jobsList').innerHTML = `<div class="spinner">${t('loading')}</div>`;
+  allJobs = await listBookings();
+  updateDriverStats(); renderJobs();
+}
+
+function filterJobs(status, btn) {
+  currentFilter = status;
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderJobs();
+}
+
+function renderJobs() {
+  const driver = localStorage.getItem('driverName') || '';
+  const isOnline = getDriverStatus() === 'online';
+  let jobs = allJobs;
+  if (currentFilter === 'PENDING') {
+    if (!isOnline) {
+      document.getElementById('jobsList').innerHTML = `<div class="card" style="text-align:center;border-left-color:#ef4444;background:#fef2f2;"><strong>${t('you_are_offline')}</strong><br><span style="font-size:13px;color:#666;">${t('offline_hint')}</span></div>`;
+      return;
+    }
+    jobs = allJobs.filter(j => j.status === 'PENDING');
+  } else if (currentFilter === 'ACCEPTED') jobs = allJobs.filter(j => j.status === 'ACCEPTED' && j.driver === driver);
+
+  if (jobs.length === 0) { document.getElementById('jobsList').innerHTML = `<p style="text-align:center;color:#999;">${t('no_jobs')}</p>`; return; }
+
+  document.getElementById('jobsList').innerHTML = jobs.reverse().map(j => `
+    <div class="card ${j.status.toLowerCase()}">
+      <span class="badge ${j.status.toLowerCase()}">${t(j.status.toLowerCase())}</span>
+      <div style="margin-top:8px;">
+        <strong>${j.name}</strong> — <a href="tel:${j.phone}">${j.phone}</a><br>
+        📍 ${j.pickup} → ${j.drop}<br>
+        🕐 ${new Date(j.datetime).toLocaleString('en-IN')}<br>
+        🚗 ${j.car || '—'}<br>
+        💰 ₹${j.fare} • ID: ${j.id}
+        ${j.rating ? `<br>⭐ ${j.rating}/5 ${j.review ? '— ' + j.review : ''}` : ''}
+      </div>
+      ${j.status === 'PENDING' ? `<div class="row"><button class="btn-green" onclick="acceptJob('${j.id}')">${t('accept')}</button></div>` : ''}
+      ${j.status === 'ACCEPTED' && j.driver === driver ? `
+        <div class="row">
+          <button class="btn-green" onclick="completeJob('${j.id}')">${t('mark_done')}</button>
+          <button class="btn-red" onclick="cancelJob('${j.id}')">${t('cancel')}</button>
+        </div>
+        <div class="row">
+          <button class="btn-blue" onclick="toggleShareLocation('${j.id}', '${driver}')" id="shareBtn_${j.id}">${t('share_location')}</button>
+          <button class="btn-blue" onclick="openChatDriver('${j.id}')">${t('chat')}</button>
+        </div>` : ''}
+    </div>
+  `).join('');
+}
+
+async function acceptJob(id) {
+  const driver = localStorage.getItem('driverName');
+  if (!driver) { showToast(t('enter_name_first')); return; }
+  await updateBooking(id, 'ACCEPTED', driver);
+  showToast(t('job_accepted')); loadJobs();
+}
+async function completeJob(id) {
+  const driver = localStorage.getItem('driverName');
+  await updateBooking(id, 'COMPLETED', driver);
+  showToast(t('ride_completed')); loadJobs();
+}
+async function cancelJob(id) {
+  await updateBooking(id, 'PENDING', '');
+  showToast(t('job_returned')); loadJobs();
+}
+
+async function toggleMap() {
+  const el = document.getElementById('map');
+  if (el.style.display === 'block') { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  if (!map) { map = L.map('map').setView([13.0827, 80.2707], 11); L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map); }
+  setTimeout(() => map.invalidateSize(), 100);
+  mapMarkers.forEach(m => map.removeLayer(m)); mapMarkers = [];
+  const pending = allJobs.filter(j => j.status === 'PENDING');
+  for (const job of pending) {
+    const c = await geocodeArea(job.pickup);
+    if (c) {
+      const m = L.marker([c.lat, c.lng]).addTo(map).bindPopup(`<b>${job.name}</b><br>${job.pickup} → ${job.drop}<br>₹${job.fare}`);
+      mapMarkers.push(m);
+    }
+    await new Promise(r => setTimeout(r, 1100));
+  }
+}
+
+async function toggleShareLocation(bookingId, driver) {
+  const btn = document.getElementById('shareBtn_' + bookingId);
+  if (activeShares[bookingId]) {
+    stopSharingLocation(); delete activeShares[bookingId];
+    btn.textContent = t('share_location'); btn.style.background = '#3b82f6';
+    showToast(t('location_sharing_off')); return;
+  }
+  const ok = await shareDriverLocation(bookingId, driver);
+  if (ok) {
+    activeShares[bookingId] = true;
+    btn.textContent = t('location_sharing_on'); btn.style.background = '#22c55e';
+    showToast(t('location_sharing_on'));
+  }
+}
+
+function openChatDriver(bookingId) { currentChatBookingId = bookingId; toggleChatDriver(); }
+
+function toggleChatDriver() {
+  const modal = document.getElementById('chatModal');
+  chatOpenD = !chatOpenD;
+  modal.style.display = chatOpenD ? 'flex' : 'none';
+  if (chatOpenD) { loadChatDriver(); chatIntervalD = setInterval(loadChatDriver, 5000); setTimeout(() => document.getElementById('chatInput').focus(), 200); }
+  else clearInterval(chatIntervalD);
+}
+
+async function loadChatDriver() {
+  if (!currentChatBookingId) return;
+  const msgs = await getChatMessages(currentChatBookingId);
+  const box = document.getElementById('chatMessages');
+  const wasAtBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 30;
+  box.innerHTML = msgs.length === 0 ? `<div style="text-align:center;color:#999;padding:20px;">${t('no_messages')}</div>` :
+    msgs.map(m => {
+      const isMe = m.sender === 'driver';
+      return `<div class="chat-bubble ${isMe ? 'me' : 'them'}"><div>${escapeHtml(m.message)}</div><div class="chat-time">${new Date(m.timestamp).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' })}</div></div>`;
+    }).join('');
+  if (wasAtBottom) box.scrollTop = box.scrollHeight;
+}
+
+async function sendChatDriver() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text || !currentChatBookingId) return;
+  input.value = '';
+  await sendChatMessage(currentChatBookingId, 'driver', text);
+  await loadChatDriver();
+}
+
+function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+document.addEventListener('DOMContentLoaded', () => { initAvailability(); });
+loadJobs();
+setInterval(loadJobs, 30000);
+</script>
+</body>
+</html>

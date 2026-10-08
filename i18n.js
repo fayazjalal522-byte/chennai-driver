@@ -1,0 +1,206 @@
+const TRANSLATIONS = {
+  en: {
+    app_title: "🚗 Chennai Acting Driver", app_subtitle: "Verified drivers • Fixed rates • 24/7",
+    driver_dashboard: "🚙 Driver Dashboard", driver_subtitle: "Accept rides near you",
+    admin_dashboard: "📊 Admin Dashboard", admin_subtitle: "All bookings & revenue",
+    your_name: "Your Name", your_name_required: "Your Name *", full_name: "Full name",
+    phone: "Phone", phone_required: "Phone *", phone_placeholder: "10-digit mobile",
+    pickup: "Pickup Location (Chennai)", pickup_required: "Pickup Location (Chennai) *",
+    select_area: "-- Select area --", drop: "Drop Location", drop_required: "Drop Location *",
+    drop_placeholder: "Where to?", service_type: "Service Type", service_required: "Service Type *",
+    date_time: "Date & Time", date_time_required: "Date & Time *",
+    car_model: "Car Model (optional)", car_placeholder: "e.g., Swift Dzire, Innova",
+    estimated_fare: "Estimated fare",
+    svc_city: "Within City (4 hrs / 40 km)", svc_full_day: "Full Day (8 hrs / 80 km)",
+    svc_night: "Night Service (10 PM - 6 AM)", svc_outstation: "Outstation (per day)",
+    book_now: "Book Driver Now", booking: "Booking...", book_another: "Book Another",
+    share_whatsapp: "📱 Share on WhatsApp", pay_via_upi: "💳 Pay", pay_via_upi_suffix: "via UPI",
+    refresh: "🔄 Refresh", show_map: "🗺️ Show Map", accept: "Accept",
+    mark_done: "Mark Done", cancel: "Cancel", submit_rating: "Submit Rating", ive_paid: "✅ I've Paid",
+    tab_new_jobs: "New Jobs", tab_my_rides: "My Rides", tab_all: "All",
+    booking_confirmed: "✅ Booking Confirmed!",
+    received_booking: "Hi {name}, we've received your booking.",
+    booking_id: "Booking ID", when: "When", fare: "Fare",
+    driver_will_call: "Our driver will call you within 5 minutes.",
+    scan_to_pay: "Scan to Pay", scan_hint: "Open PhonePe / GPay / Paytm and scan",
+    generating_qr: "Generating QR...", online_not_configured: "Online payment not configured.",
+    pay_cash: "Please pay {amount} in cash to the driver.",
+    rate_driver: "⭐ Rate Your Driver", feedback_placeholder: "Any feedback? (optional)",
+    thanks_feedback: "⭐ Thank you for your feedback!", select_rating: "Please select a rating",
+    enter_name: "Enter your name", rides: "rides", rated: "rated",
+    no_jobs: "No jobs here yet.", loading: "Loading...", enter_name_first: "Enter your name first",
+    job_accepted: "✅ Job accepted", ride_completed: "🎉 Ride completed", job_returned: "Job returned to pool",
+    pending: "Pending", active: "Active", completed: "Completed", revenue: "Revenue",
+    all_bookings: "All Bookings", no_bookings: "No bookings yet.", driver_label: "Driver",
+    or_call: "Or call", or: "Or",
+    fill_fields: "Please fill all required fields (10-digit phone)",
+    booking_failed: "Booking failed. Please call us directly.",
+    payment_noted: "✅ Thank you! Payment noted.",
+    detect_location: "📍 Auto-detect my area", detecting: "Detecting...",
+    location_found: "Location detected",
+    location_denied: "Location denied. Please select manually.",
+    location_failed: "Could not detect. Select area manually.",
+    availability: "Availability", online: "Online", offline: "Offline",
+    you_are_online: "🟢 You are Online — visible to customers",
+    you_are_offline: "🔴 You are Offline — hidden from customers",
+    offline_hint: "Turn online to receive job requests",
+    enable_notifications: "🔔 Enable Notifications",
+    notifications_enabled: "🔔 Notifications enabled",
+    notifications_denied: "Notifications blocked",
+    new_job_alert: "🚗 New job available near you!",
+    leaderboard: "🏆 Leaderboard", leaderboard_sub: "Top drivers this month",
+    no_data: "No data yet this month.", view_leaderboard: "🏆 View Leaderboard",
+    track_driver: "📍 Track Driver", driver_en_route: "Driver is on the way",
+    share_location: "📍 Share My Location", location_sharing_on: "📍 Sharing your location",
+    location_sharing_off: "Location sharing off",
+    last_updated: "Updated {sec}s ago", stop_tracking: "Stop Tracking",
+    chat: "💬 Chat", chat_with_driver: "Chat with Driver", chat_with_customer: "Chat with Customer",
+    type_message: "Type a message...", send: "Send",
+    no_messages: "No messages yet. Say hi! 👋", you: "You",
+    rank: "Rank", driver_name: "Driver", month_rides: "Rides", month_earnings: "Earnings", avg_rating: "Rating"
+  },
+  ta: {
+    app_title: "🚗 சென்னை ஆக்டிங் டிரைவர்", app_subtitle: "சரிபார்க்கப்பட்ட டிரைவர்கள் • நிலையான கட்டணம் • 24/7",
+    driver_dashboard: "🚙 டிரைவர் டாஷ்போர்டு", driver_subtitle: "அருகிலுள்ள சவாரிகளை ஏற்கவும்",
+    admin_dashboard: "📊 நிர்வாக டாஷ்போர்டு", admin_subtitle: "அனைத்து முன்பதிவுகள் & வருவாய்",
+    your_name: "உங்கள் பெயர்", your_name_required: "உங்கள் பெயர் *", full_name: "முழு பெயர்",
+    phone: "தொலைபேசி எண்", phone_required: "தொலைபேசி எண் *", phone_placeholder: "10 இலக்க எண்",
+    pickup: "ஏற்றுமிடம் (சென்னை)", pickup_required: "ஏற்றுமிடம் (சென்னை) *",
+    select_area: "-- பகுதியைத் தேர்ந்தெடுக்கவும் --", drop: "இறங்குமிடம்", drop_required: "இறங்குமிடம் *",
+    drop_placeholder: "எங்கே செல்ல வேண்டும்?", service_type: "சேவை வகை", service_required: "சேவை வகை *",
+    date_time: "தேதி & நேரம்", date_time_required: "தேதி & நேரம் *",
+    car_model: "கார் மாடல் (விருப்பம்)", car_placeholder: "உ.ம்., Swift Dzire, Innova",
+    estimated_fare: "மதிப்பிடப்பட்ட கட்டணம்",
+    svc_city: "நகரத்திற்குள் (4 மணி / 40 கி.மீ)", svc_full_day: "முழு நாள் (8 மணி / 80 கி.மீ)",
+    svc_night: "இரவு சேவை (இரவு 10 - காலை 6)", svc_outstation: "வெளியூர் (ஒரு நாள்)",
+    book_now: "டிரைவரை பதிவு செய்யவும்", booking: "பதிவு செய்கிறது...", book_another: "மற்றொன்றை பதிவு செய்யவும்",
+    share_whatsapp: "📱 WhatsApp இல் பகிரவும்", pay_via_upi: "💳 ₹ செலுத்தவும்", pay_via_upi_suffix: "UPI மூலம்",
+    refresh: "🔄 புதுப்பிக்கவும்", show_map: "🗺️ வரைபடம் காட்டு", accept: "ஏற்றுக்கொள்",
+    mark_done: "முடிந்ததாக குறி", cancel: "ரத்து செய்", submit_rating: "மதிப்பீட்டை சமர்ப்பிக்கவும்", ive_paid: "✅ செலுத்திவிட்டேன்",
+    tab_new_jobs: "புதிய வேலைகள்", tab_my_rides: "எனது சவாரிகள்", tab_all: "அனைத்தும்",
+    booking_confirmed: "✅ முன்பதிவு உறுதிசெய்யப்பட்டது!",
+    received_booking: "வணக்கம் {name}, உங்கள் முன்பதிவு பெறப்பட்டது.",
+    booking_id: "முன்பதிவு ஐடி", when: "எப்போது", fare: "கட்டணம்",
+    driver_will_call: "எங்கள் டிரைவர் 5 நிமிடங்களில் உங்களை அழைப்பார்.",
+    scan_to_pay: "பணம் செலுத்த ஸ்கேன் செய்யவும்", scan_hint: "PhonePe / GPay / Paytm திறந்து ஸ்கேன் செய்யவும்",
+    generating_qr: "QR உருவாக்குகிறது...", online_not_configured: "ஆன்லைன் பணம் அமைக்கப்படவில்லை.",
+    pay_cash: "டிரைவரிடம் {amount} ரொக்கமாக செலுத்தவும்.",
+    rate_driver: "⭐ உங்கள் டிரைவரை மதிப்பிடவும்", feedback_placeholder: "கருத்து? (விருப்பம்)",
+    thanks_feedback: "⭐ உங்கள் கருத்துக்கு நன்றி!", select_rating: "மதிப்பீட்டை தேர்ந்தெடுக்கவும்",
+    enter_name: "உங்கள் பெயரை உள்ளிடவும்", rides: "சவாரிகள்", rated: "மதிப்பிடப்பட்டது",
+    no_jobs: "இங்கு வேலைகள் இல்லை.", loading: "ஏற்றுகிறது...", enter_name_first: "முதலில் உங்கள் பெயரை உள்ளிடவும்",
+    job_accepted: "✅ வேலை ஏற்கப்பட்டது", ride_completed: "🎉 சவாரி முடிந்தது", job_returned: "வேலை திரும்பியது",
+    pending: "நிலுவையில்", active: "செயலில்", completed: "முடிந்தது", revenue: "வருவாய்",
+    all_bookings: "அனைத்து முன்பதிவுகள்", no_bookings: "முன்பதிவுகள் இல்லை.", driver_label: "டிரைவர்",
+    or_call: "அல்லது அழைக்கவும்", or: "அல்லது",
+    fill_fields: "தேவையான புலங்களை நிரப்பவும் (10 இலக்க எண்)",
+    booking_failed: "முன்பதிவு தோல்வி. எங்களை நேரடியாக அழைக்கவும்.",
+    payment_noted: "✅ நன்றி! பணம் பதிவு செய்யப்பட்டது.",
+    detect_location: "📍 என் பகுதியை கண்டறியவும்", detecting: "கண்டறிகிறது...",
+    location_found: "இருப்பிடம் கண்டறியப்பட்டது", location_denied: "இருப்பிட அணுகல் மறுக்கப்பட்டது.",
+    location_failed: "இருப்பிடம் கண்டறிய முடியவில்லை.",
+    availability: "கிடைக்கும் நிலை", online: "ஆன்லைன்", offline: "ஆஃப்லைன்",
+    you_are_online: "🟢 நீங்கள் ஆன்லைனில் உள்ளீர்கள்", you_are_offline: "🔴 நீங்கள் ஆஃப்லைனில் உள்ளீர்கள்",
+    offline_hint: "ஆன்லைனில் இருக்கும்போது புதிய வேலைகளை காண்பீர்கள்",
+    enable_notifications: "🔔 அறிவிப்புகளை இயக்கவும்", notifications_enabled: "🔔 அறிவிப்புகள் இயக்கப்பட்டன",
+    notifications_denied: "அறிவிப்புகள் தடுக்கப்பட்டன", new_job_alert: "🚗 உங்கள் அருகில் புதிய வேலை!",
+    leaderboard: "🏆 தரவரிசை", leaderboard_sub: "இந்த மாதத்தின் சிறந்த டிரைவர்கள்",
+    no_data: "இந்த மாதம் தரவு இல்லை.", view_leaderboard: "🏆 தரவரிசையைப் பார்க்கவும்",
+    track_driver: "📍 டிரைவரை கண்காணிக்கவும்", driver_en_route: "டிரைவர் வழியில் உள்ளார்",
+    share_location: "📍 என் இருப்பிடத்தை பகிரவும்", location_sharing_on: "📍 இருப்பிடம் பகிரப்படுகிறது",
+    location_sharing_off: "இருப்பிட பகிர்வு அணைக்கப்பட்டது",
+    last_updated: "{sec} விநாடிகளுக்கு முன் புதுப்பிக்கப்பட்டது", stop_tracking: "கண்காணிப்பை நிறுத்து",
+    chat: "💬 அரட்டை", chat_with_driver: "டிரைவருடன் அரட்டை", chat_with_customer: "வாடிக்கையாளருடன் அரட்டை",
+    type_message: "செய்தியை உள்ளிடவும்...", send: "அனுப்பு",
+    no_messages: "இன்னும் செய்திகள் இல்லை. வணக்கம் சொல்லுங்கள்! 👋", you: "நீங்கள்",
+    rank: "தரவரிசை", driver_name: "டிரைவர்", month_rides: "சவாரிகள்", month_earnings: "வருவாய்", avg_rating: "மதிப்பீடு"
+  },
+  tg: {
+    app_title: "🚗 Chennai Driver", app_subtitle: "Nambikkaana drivers • Fixed rate • 24/7",
+    driver_dashboard: "🚙 Driver Dashboard", driver_subtitle: "Pakathula irukkura ride-a accept pannunga",
+    admin_dashboard: "📊 Admin Dashboard", admin_subtitle: "Ella booking-um revenue-um",
+    your_name: "Unga Peru", your_name_required: "Unga Peru *", full_name: "Full name",
+    phone: "Phone Number", phone_required: "Phone Number *", phone_placeholder: "10 digit mobile",
+    pickup: "Pickup Place (Chennai)", pickup_required: "Pickup Place (Chennai) *",
+    select_area: "-- Area select pannunga --", drop: "Drop Place", drop_required: "Drop Place *",
+    drop_placeholder: "Enga poganum?", service_type: "Service Type", service_required: "Service Type *",
+    date_time: "Date & Time", date_time_required: "Date & Time *",
+    car_model: "Car Model (venum-na)", car_placeholder: "udaharanam: Swift Dzire, Innova",
+    estimated_fare: "Approximate fare",
+    svc_city: "Oorukulle (4 hrs / 40 km)", svc_full_day: "Full Day (8 hrs / 80 km)",
+    svc_night: "Night Service (10 PM - 6 AM)", svc_outstation: "Veliya Ooru (oru naal)",
+    book_now: "Driver Book Pannunga", booking: "Booking aaguthu...", book_another: "Innoru Booking",
+    share_whatsapp: "📱 WhatsApp-la Share Pannunga", pay_via_upi: "💳 ₹ Pay Pannunga", pay_via_upi_suffix: "UPI moolama",
+    refresh: "🔄 Refresh Pannunga", show_map: "🗺️ Map Kaattunga", accept: "Accept Pannunga",
+    mark_done: "Mudinjathaa Mark Pannunga", cancel: "Cancel Pannunga", submit_rating: "Rating Anuppunga", ive_paid: "✅ Naan Pay Panniten",
+    tab_new_jobs: "Pudhu Velai", tab_my_rides: "En Rides", tab_all: "Ellame",
+    booking_confirmed: "✅ Booking Confirm Aayiduchu!",
+    received_booking: "Vanakkam {name}, unga booking-ku vandhuruchu.",
+    booking_id: "Booking ID", when: "Eppo", fare: "Fare",
+    driver_will_call: "Enga driver 5 nimishathula unga-ku call pannuvaanga.",
+    scan_to_pay: "Pay Panna Scan Pannunga", scan_hint: "PhonePe / GPay / Paytm open panni scan pannunga",
+    generating_qr: "QR generate aaguthu...", online_not_configured: "Online payment set aagala.",
+    pay_cash: "Driver-ku {amount} cash-a kudunga.",
+    rate_driver: "⭐ Unga Driver-ku Rating Kudunga", feedback_placeholder: "Edhavadhu feedback? (venum-na)",
+    thanks_feedback: "⭐ Unga feedback-ku nandri!", select_rating: "Rating select pannunga",
+    enter_name: "Unga peru type pannunga", rides: "rides", rated: "rated",
+    no_jobs: "Inga velai illa.", loading: "Load aaguthu...", enter_name_first: "Modhalla unga peru podunga",
+    job_accepted: "✅ Velai accept aayiduchu", ride_completed: "🎉 Ride mudinjuchu", job_returned: "Velai thirumbi pochu",
+    pending: "Niluvaila", active: "Nadapula", completed: "Mudinjiduchu", revenue: "Varumaanam",
+    all_bookings: "Ella Bookings-um", no_bookings: "Booking illa.", driver_label: "Driver",
+    or_call: "Illana call pannunga", or: "Illana",
+    fill_fields: "Ella field-um fill pannunga (10 digit phone)",
+    booking_failed: "Booking fail aayiduchu. Direct-a call pannunga.",
+    payment_noted: "✅ Nandri! Payment note panniten.",
+    detect_location: "📍 En Area Detect Pannunga", detecting: "Detect aaguthu...",
+    location_found: "Location kandupidichuten", location_denied: "Location access illa. Manual-a select pannunga.",
+    location_failed: "Location detect aagala. Manual-a select pannunga.",
+    availability: "Availability", online: "Online", offline: "Offline",
+    you_are_online: "🟢 Neenga Online-la irukeenga", you_are_offline: "🔴 Neenga Offline-la irukeenga",
+    offline_hint: "Job request vaanga online ponga",
+    enable_notifications: "🔔 Notifications On Pannunga", notifications_enabled: "🔔 Notifications on aayiduchu",
+    notifications_denied: "Notifications block aayiduchu", new_job_alert: "🚗 Unga pakathula pudhu velai!",
+    leaderboard: "🏆 Leaderboard", leaderboard_sub: "Indha maasam top drivers",
+    no_data: "Indha maasam data illa.", view_leaderboard: "🏆 Leaderboard Paakkalaam",
+    track_driver: "📍 Driver-a Track Pannunga", driver_en_route: "Driver vandhutu irukaaru",
+    share_location: "📍 En Location Share Pannunga", location_sharing_on: "📍 Location share aaguthu",
+    location_sharing_off: "Location sharing off",
+    last_updated: "{sec}s munnaadi update aachu", stop_tracking: "Tracking Nippattu",
+    chat: "💬 Chat", chat_with_driver: "Driver-kitta Chat", chat_with_customer: "Customer-kitta Chat",
+    type_message: "Message type pannunga...", send: "Anuppu",
+    no_messages: "Innum message illa. Hi sollunga! 👋", you: "Neenga",
+    rank: "Rank", driver_name: "Driver", month_rides: "Rides", month_earnings: "Sambaadhanam", avg_rating: "Rating"
+  }
+};
+
+const LANG_NAMES = { en: "English", ta: "தமிழ்", tg: "Tanglish" };
+
+function getLang() { return localStorage.getItem('lang') || 'en'; }
+function setLang(lang) { localStorage.setItem('lang', lang); applyTranslations(); updateSwitcherUI(); }
+function t(key, params = {}) {
+  const lang = getLang();
+  let str = (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
+  Object.keys(params).forEach(k => { str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), params[k]); });
+  return str;
+}
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
+  document.documentElement.lang = getLang() === 'ta' ? 'ta' : 'en';
+}
+function renderSwitcher() {
+  const current = getLang();
+  const bar = document.createElement('div');
+  bar.className = 'lang-switcher';
+  bar.innerHTML = Object.keys(LANG_NAMES).map(code =>
+    `<button class="lang-btn ${code === current ? 'active' : ''}" onclick="setLang('${code}')">${LANG_NAMES[code]}</button>`
+  ).join('');
+  document.body.insertBefore(bar, document.body.firstChild);
+}
+function updateSwitcherUI() {
+  const current = getLang();
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.trim() === LANG_NAMES[current]);
+  });
+}
+document.addEventListener('DOMContentLoaded', () => { renderSwitcher(); applyTranslations(); });
