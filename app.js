@@ -1,7 +1,7 @@
 // ================================================================
 // YOUR CONFIGURATION
 // ================================================================
-const API_URL = 'https://script.google.com/macros/s/AKfycbzmw001y6BVhUBfpujUDpQu87k5MSJSHgUa7lX0nuGVqHrGGo8sgCBYtI6ev2Cw2R09gQ/exec';                 
+const API_URL = 'https://script.google.com/macros/s/AKfycby_z9QpzKtOrC-irvIpes-MWg6TACpm9VI_N8dyas5BIYVXm_5f2Vtko3utLVWPCBE2vQ/exec';
 const BUSINESS_PHONE = '917845199014';
 const OWNER_UPI = 'Chennaiactingdriver@ybl';
 const COMMISSION_RATE = 0.10;
