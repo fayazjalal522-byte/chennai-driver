@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chennai Acting Driver — Book Now</title>
+<title>DriveEase — Book Now</title>
 <meta name="theme-color" content="#ff6b35">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 <body>
 <div class="container">
   <div id="formView">
-    <h1 data-i18n="app_title">🚗 Chennai Acting Driver</h1>
+    <h1 data-i18n="app_title">🚗 DriveEase</h1>
     <p class="sub" data-i18n="app_subtitle">Verified drivers • Fixed rates • 24/7</p>
     <label data-i18n="your_name_required">Your Name *</label>
     <input type="text" id="name" data-i18n-placeholder="full_name">
@@ -135,7 +135,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="i18n.js"></script>
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 <script>
 let lastBooking = null, selectedRating = 0;
 let customerMap = null, driverMarker = null, trackingInterval = null, trackingActive = false;
@@ -359,7 +359,7 @@ function markAsPaid() { showToast(t('payment_noted')); document.getElementById('
 
 function shareWhatsApp() {
   if (!lastBooking) return;
-  const msg = `🚗 Chennai Acting Driver Booking\n\nID: ${lastBooking.id}\nName: ${lastBooking.name}\nPhone: ${lastBooking.phone}\nPickup: ${lastBooking.pickup}\nDrop: ${lastBooking.drop}\nService: ${lastBooking.service}\nWhen: ${new Date(lastBooking.datetime).toLocaleString('en-IN')}\nFare: ₹${lastBooking.fare}`;
+  const msg = `🚗 DriveEase Booking\n\nID: ${lastBooking.id}\nName: ${lastBooking.name}\nPhone: ${lastBooking.phone}\nPickup: ${lastBooking.pickup}\nDrop: ${lastBooking.drop}\nService: ${lastBooking.service}\nWhen: ${new Date(lastBooking.datetime).toLocaleString('en-IN')}\nFare: ₹${lastBooking.fare}`;
   window.open(`https://wa.me/${BUSINESS_PHONE}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 

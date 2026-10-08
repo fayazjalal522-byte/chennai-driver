@@ -1,6 +1,6 @@
 const TRANSLATIONS = {
   en: {
-    app_title: "🚗 Chennai Acting Driver", app_subtitle: "Verified drivers • Fixed rates • 24/7",
+    app_title: "🚗 DriveEase", app_subtitle: "Verified drivers • Fixed rates • 24/7",
     driver_dashboard: "🚙 Driver Dashboard", driver_subtitle: "Accept rides near you",
     admin_dashboard: "📊 Admin Dashboard", admin_subtitle: "All bookings & revenue",
     your_name: "Your Name", your_name_required: "Your Name *", full_name: "Full name",

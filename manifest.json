@@ -1,6 +1,6 @@
 {
-  "name": "Chennai Acting Driver",
-  "short_name": "ChennaiDriver",
+  "name": "DriveEase",
+  "short_name": "DriveEase",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ff6b35",
