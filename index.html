@@ -34,22 +34,43 @@
     </select>
     <label data-i18n="drop_required">Drop Location *</label>
     <input type="text" id="drop" data-i18n-placeholder="drop_placeholder">
+
     <label data-i18n="service_required">Service Type *</label>
     <select id="service" onchange="updatePrice()">
-      <option value="700|city" data-i18n="svc_city">Within City</option>
-      <option value="1200|full_day" data-i18n="svc_full_day">Full Day</option>
-      <option value="1000|night" data-i18n="svc_night">Night Service</option>
-      <option value="1500|outstation" data-i18n="svc_outstation">Outstation</option>
+      <option value="hourly" data-i18n="svc_hourly">Hourly (₹500 for 4 hrs, +₹100/hr)</option>
+      <option value="full_day" data-i18n="svc_full_day">Full Day (8 hrs) — ₹900</option>
+      <option value="outstation" data-i18n="svc_outstation">Outstation (₹5/km, min ₹1,500)</option>
     </select>
+
+    <div id="hoursField" style="display:none;">
+      <label data-i18n="hours_needed">How many hours? *</label>
+      <select id="hours" onchange="updatePrice()">
+        <option value="4">4 hours</option>
+        <option value="5">5 hours</option>
+        <option value="6">6 hours</option>
+        <option value="7">7 hours</option>
+        <option value="8">8 hours</option>
+        <option value="9">9 hours</option>
+        <option value="10">10 hours</option>
+        <option value="12">12 hours</option>
+      </select>
+    </div>
+
+    <div id="kmField" style="display:none;">
+      <label data-i18n="total_km">Total Kilometers *</label>
+      <input type="number" id="km" min="1" placeholder="e.g., 300" oninput="updatePrice()">
+    </div>
+
     <label data-i18n="date_time_required">Date & Time *</label>
     <input type="datetime-local" id="datetime">
     <label data-i18n="car_model">Car Model (optional)</label>
     <input type="text" id="car" data-i18n-placeholder="car_placeholder">
+
     <div class="price-box">
-      <span data-i18n="estimated_fare">Estimated fare</span>: <strong>₹<span id="priceValue">700</span></strong>
+      <span data-i18n="estimated_fare">Estimated fare</span>: <strong>₹<span id="priceValue">500</span></strong>
     </div>
     <button onclick="bookDriver()" id="bookBtn" data-i18n="book_now">Book Driver Now</button>
-    <div class="contact"><span data-i18n="or_call">Or call</span>: <a href="tel:+919876543210">+91 98765 43210</a></div>
+    <div class="contact"><span data-i18n="or_call">Or call</span>: <a href="tel:+917845199014">+91 78451 99014</a></div>
   </div>
 
   <div class="success" id="successView">
@@ -119,8 +140,49 @@ let customerMap = null, driverMarker = null, trackingInterval = null, trackingAc
 let chatInterval = null, chatOpen = false;
 
 function updatePrice() {
-  const val = document.getElementById('service').value;
-  document.getElementById('priceValue').textContent = val.split('|')[0];
+  const svc = document.getElementById('service').value;
+  const hoursField = document.getElementById('hoursField');
+  const kmField = document.getElementById('kmField');
+  let price = 500;
+
+  hoursField.style.display = 'none';
+  kmField.style.display = 'none';
+
+  if (svc === 'hourly') {
+    hoursField.style.display = 'block';
+    const hrs = parseInt(document.getElementById('hours').value) || 4;
+    if (hrs <= 4) price = 500;
+    else price = 500 + (hrs - 4) * 100;
+  } else if (svc === 'full_day') {
+    price = 900;
+  } else if (svc === 'outstation') {
+    kmField.style.display = 'block';
+    const km = parseInt(document.getElementById('km').value) || 0;
+    if (km > 0) {
+      price = Math.max(km * 5, 1500);
+    } else {
+      price = 1500;
+    }
+  }
+
+  document.getElementById('priceValue').textContent = price;
+  return price;
+}
+
+function getServiceDescription() {
+  const svc = document.getElementById('service').value;
+  if (svc === 'hourly') {
+    const hrs = document.getElementById('hours').value;
+    const price = parseInt(document.getElementById('priceValue').textContent);
+    return `${hrs} hours — ₹${price}`;
+  } else if (svc === 'full_day') {
+    return `Full Day (8 hrs) — ₹900`;
+  } else if (svc === 'outstation') {
+    const km = document.getElementById('km').value || 0;
+    const price = parseInt(document.getElementById('priceValue').textContent);
+    return `Outstation ${km} km — ₹${price}`;
+  }
+  return '';
 }
 
 async function handleAutoDetect() {
@@ -145,16 +207,19 @@ async function bookDriver() {
   const pickupEl = document.getElementById('pickup');
   const pickup = pickupEl.options[pickupEl.selectedIndex].text;
   const drop = document.getElementById('drop').value.trim();
-  const svcEl = document.getElementById('service');
-  const svcKey = svcEl.value.split('|')[1];
-  const service = TRANSLATIONS.en['svc_' + svcKey];
-  const fare = svcEl.value.split('|')[0];
+  const svc = document.getElementById('service').value;
+  const service = getServiceDescription();
+  const fare = document.getElementById('priceValue').textContent;
   const datetime = document.getElementById('datetime').value;
   const car = document.getElementById('car').value.trim();
 
   if (!name || phone.length !== 10 || !pickupEl.value || !drop || !datetime) {
     showToast(t('fill_fields')); return;
   }
+  if (svc === 'outstation' && !document.getElementById('km').value) {
+    showToast('Please enter total kilometers'); return;
+  }
+
   const btn = document.getElementById('bookBtn');
   btn.disabled = true; btn.textContent = t('booking');
   lastBooking = { name, phone, pickup, drop, service, datetime, car, fare };
@@ -170,6 +235,7 @@ async function bookDriver() {
         <strong>${t('pickup')}:</strong> ${pickup}<br>
         <strong>${t('drop')}:</strong> ${drop}<br>
         <strong>${t('when')}:</strong> ${new Date(datetime).toLocaleString('en-IN')}<br>
+        <strong>Service:</strong> ${service}<br>
         <strong>${t('fare')}:</strong> ₹${fare}`;
       document.getElementById('payAmount').textContent = fare;
       pollBookingStatus(result.id);
