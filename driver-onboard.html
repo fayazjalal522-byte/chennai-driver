@@ -12,32 +12,62 @@
   <div id="formView">
     <h1>🎯 Become a Driver</h1>
     <p class="sub">Join Chennai's fastest-growing driver network</p>
+
     <div class="card" style="background:#f0fdf4;border-left-color:#22c55e;font-size:13px;">
       <strong>💰 Earn ₹500–1,500 per booking</strong><br>
-      ✅ Weekly UPI payout<br>
+      ✅ Daily payout (keep 90%)<br>
       ✅ Flexible timing<br>
       ✅ No investment needed
     </div>
+
+    <!-- PERSONAL INFO -->
+    <h3 style="color:#ff6b35;">👤 Personal Info</h3>
     <label>Full Name *</label>
     <input type="text" id="name" placeholder="As per license">
+
     <label>Phone Number *</label>
     <input type="tel" id="phone" maxlength="10" placeholder="10-digit mobile">
-    <label>Driving License Number *</label>
+
+    <!-- LICENSE -->
+    <h3 style="color:#ff6b35;margin-top:20px;">🪪 Driving License</h3>
+    <label>License Number *</label>
     <input type="text" id="licenseNo" placeholder="TN0120180012345" style="text-transform:uppercase;">
+
+    <label>Upload License Photo (front) *</label>
+    <input type="file" id="licenseFile" accept="image/*" capture="environment" style="padding:8px;background:#f9f9f9;">
+    <div id="licensePreview" style="font-size:12px;color:#22c55e;margin-top:4px;"></div>
+
+    <!-- AADHAAR -->
+    <h3 style="color:#ff6b35;margin-top:20px;">🆔 Aadhaar Verification</h3>
     <label>Aadhaar Last 4 Digits *</label>
     <input type="text" id="aadhaarLast4" maxlength="4" pattern="[0-9]{4}" placeholder="XXXX">
+
+    <label>Upload Aadhaar Photo (front) *</label>
+    <input type="file" id="aadhaarFile" accept="image/*" capture="environment" style="padding:8px;background:#f9f9f9;">
+    <div id="aadhaarPreview" style="font-size:12px;color:#22c55e;margin-top:4px;"></div>
+
+    <!-- SELFIE -->
+    <h3 style="color:#ff6b35;margin-top:20px;">🤳 Selfie Verification</h3>
+    <label>Upload Selfie with License (optional but faster approval)</label>
+    <input type="file" id="selfieFile" accept="image/*" capture="user" style="padding:8px;background:#f9f9f9;">
+    <div id="selfiePreview" style="font-size:12px;color:#22c55e;margin-top:4px;"></div>
+
+    <!-- VEHICLE & EXPERIENCE -->
+    <h3 style="color:#ff6b35;margin-top:20px;">🚗 Vehicle & Experience</h3>
     <label>Vehicle You Can Drive *</label>
     <select id="vehicle">
       <option value="">-- Select --</option>
       <option>Manual Car</option><option>Automatic Car</option>
       <option>Both Manual & Automatic</option><option>SUV / MUV</option><option>Luxury Cars</option>
     </select>
+
     <label>Years of Experience *</label>
     <select id="experience">
       <option value="">-- Select --</option>
       <option>1–2 years</option><option>3–5 years</option>
       <option>5–10 years</option><option>10+ years</option>
     </select>
+
     <label>Preferred Area (Chennai) *</label>
     <select id="area">
       <option value="">-- Select --</option>
@@ -47,12 +77,16 @@
       <option>Egmore</option><option>Central Chennai</option>
       <option>Airport Zone</option><option>Any Area</option>
     </select>
-    <div style="font-size:12px;color:#666;margin-top:16px;line-height:1.5;">
-      By submitting, you agree to background verification and our terms.
+
+    <div style="font-size:12px;color:#666;margin-top:16px;line-height:1.5;background:#f9f9f9;padding:12px;border-radius:8px;">
+      <strong>🔒 Privacy:</strong> Your Aadhaar, license, and selfie are stored securely in an encrypted Google Drive folder. They are used only for identity verification and never shared with anyone.
     </div>
+
     <button onclick="submitApplication()" id="submitBtn">Submit Application</button>
-    <div class="contact">Questions? <a href="tel:+919876543210">Call us</a></div>
+
+    <div class="contact">Questions? <a href="tel:+917845199014">Call us</a></div>
   </div>
+
   <div class="success" id="successView">
     <h2>🎉 Application Received!</h2>
     <p id="confirmMsg"></p>
@@ -61,8 +95,36 @@
     <button class="btn-secondary" onclick="location.reload()">Submit Another</button>
   </div>
 </div>
+
 <script src="app.js"></script>
 <script>
+function previewFile(inputId, previewId) {
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if (file) {
+      preview.textContent = `✅ ${file.name} (${Math.round(file.size/1024)} KB)`;
+    } else {
+      preview.textContent = '';
+    }
+  });
+}
+previewFile('licenseFile', 'licensePreview');
+previewFile('aadhaarFile', 'aadhaarPreview');
+previewFile('selfieFile', 'selfiePreview');
+
+async function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) { resolve(''); return; }
+    if (file.size > 2000000) { reject('File too large (max 2 MB)'); return; }
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject('File read error');
+    reader.readAsDataURL(file);
+  });
+}
+
 async function submitApplication() {
   const name = document.getElementById('name').value.trim();
   const phone = document.getElementById('phone').value.trim();
@@ -71,20 +133,54 @@ async function submitApplication() {
   const vehicle = document.getElementById('vehicle').value;
   const experience = document.getElementById('experience').value;
   const area = document.getElementById('area').value;
+
+  const licenseFile = document.getElementById('licenseFile').files[0];
+  const aadhaarFile = document.getElementById('aadhaarFile').files[0];
+  const selfieFile = document.getElementById('selfieFile').files[0];
+
   if (!name || phone.length !== 10 || !licenseNo || aadhaarLast4.length !== 4 || !vehicle || !experience || !area) {
-    showToast('Please fill all required fields correctly'); return;
+    showToast('Please fill all required fields'); return;
   }
+  if (!licenseFile) { showToast('Please upload license photo'); return; }
+  if (!aadhaarFile) { showToast('Please upload Aadhaar photo'); return; }
+
   const btn = document.getElementById('submitBtn');
-  btn.disabled = true; btn.textContent = 'Submitting...';
+  btn.disabled = true;
+  btn.textContent = 'Uploading... (this may take 30 sec)';
+
   try {
-    const res = await apiCall({ action: 'driverApply', name, phone, licenseNo, aadhaarLast4, vehicle, experience, area });
+    const licenseData = await fileToBase64(licenseFile);
+    const aadhaarData = await fileToBase64(aadhaarFile);
+    const selfieData = await fileToBase64(selfieFile);
+
+    const res = await apiCall({
+      action: 'driverApplyWithDocs',
+      name, phone, licenseNo, aadhaarLast4, vehicle, experience, area,
+      licenseData, aadhaarData, selfieData,
+      licenseName: licenseFile.name,
+      aadhaarName: aadhaarFile.name,
+      selfieName: selfieFile ? selfieFile.name : ''
+    });
+
     if (res.ok) {
       document.getElementById('formView').style.display = 'none';
       document.getElementById('successView').style.display = 'block';
       document.getElementById('confirmMsg').innerHTML = `Thanks <strong>${name}</strong>!`;
-      document.getElementById('appCard').innerHTML = `<strong>Application ID:</strong> ${res.driverId}<br><strong>Status:</strong> <span style="color:#f59e0b;">PENDING</span>`;
-    } else { showToast(res.error || 'Application failed'); btn.disabled = false; btn.textContent = 'Submit Application'; }
-  } catch (e) { showToast('Failed. Please call us'); btn.disabled = false; btn.textContent = 'Submit Application'; }
+      document.getElementById('appCard').innerHTML = `
+        <strong>Application ID:</strong> ${res.driverId}<br>
+        <strong>Status:</strong> <span style="color:#f59e0b;">PENDING VERIFICATION</span><br>
+        <strong>Docs uploaded:</strong> ✅ License ✅ Aadhaar ${selfieFile ? '✅ Selfie' : ''}
+      `;
+    } else {
+      showToast(res.error || 'Application failed');
+      btn.disabled = false;
+      btn.textContent = 'Submit Application';
+    }
+  } catch (err) {
+    showToast(err || 'Upload failed. Try smaller images.');
+    btn.disabled = false;
+    btn.textContent = 'Submit Application';
+  }
 }
 </script>
 </body>

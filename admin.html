@@ -19,8 +19,11 @@
   <div class="stats-grid" id="statsGrid"></div>
   <button onclick="loadAdmin()" data-i18n="refresh">🔄 Refresh</button>
 
-  <h3>Pending Driver Applications</h3>
+  <h3>🚗 Pending Driver Applications</h3>
   <div id="driverApps"></div>
+
+  <h3 style="margin-top:20px;">✅ Approved Drivers</h3>
+  <div id="approvedDrivers"></div>
 
   <h3 data-i18n="all_bookings">All Bookings</h3>
   <div id="adminList"></div>
@@ -58,8 +61,10 @@ async function loadAdmin() {
 async function loadDriverApps() {
   const res = await apiCall({ action: 'driverList' });
   if (!res.ok) return;
+
   const pending = res.drivers.filter(d => d.status === 'PENDING');
   const approved = res.drivers.filter(d => d.status === 'APPROVED');
+
   document.getElementById('driverApps').innerHTML =
     (pending.length === 0 ? '<p style="color:#999;">No pending applications.</p>' :
     pending.map(d => `
@@ -67,26 +72,52 @@ async function loadDriverApps() {
         <span class="badge pending">PENDING</span>
         <div style="margin-top:8px;">
           <strong>${d.name}</strong> — <a href="tel:${d.phone}">${d.phone}</a><br>
-          License: ${d.licenseNo} • Vehicle: ${d.vehicle}<br>Area: ${d.area}
+          License No: <strong>${d.licenseNo || '—'}</strong><br>
+          Aadhaar Last 4: <strong>${d.aadhaarLast4 || '—'}</strong><br>
+          Vehicle: ${d.vehicle} • Experience: ${d.experience}<br>
+          Area: ${d.area}
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px dashed #ddd;">
+          <strong>📎 Documents:</strong><br>
+          ${d.licenseUrl ? `📷 <a href="${d.licenseUrl}" target="_blank">View License</a><br>` : '<span style="color:#ef4444;">❌ License not uploaded</span><br>'}
+          ${d.aadhaarUrl ? `🆔 <a href="${d.aadhaarUrl}" target="_blank">View Aadhaar</a><br>` : '<span style="color:#ef4444;">❌ Aadhaar not uploaded</span><br>'}
+          ${d.selfieUrl ? `🤳 <a href="${d.selfieUrl}" target="_blank">View Selfie</a><br>` : '<span style="color:#999;">🤳 Selfie (optional) not uploaded</span><br>'}
+          ${d.folderUrl ? `<br>📁 <a href="${d.folderUrl}" target="_blank">Open Full Folder in Drive</a>` : ''}
         </div>
         <div class="row">
           <button class="btn-green" onclick="approveDriver('${d.id}')">✅ Approve</button>
           <button class="btn-red" onclick="rejectDriver('${d.id}')">❌ Reject</button>
         </div>
-      </div>`).join('')) +
-    `<h3 style="margin-top:20px;">Approved Drivers (${approved.length})</h3>` +
-    approved.map(d => `<div class="card completed"><span class="badge completed">APPROVED</span><div style="margin-top:8px;"><strong>${d.name}</strong> — ${d.phone}</div></div>`).join('');
+      </div>`).join('')) || '<p style="color:#999;">—</p>';
+
+  document.getElementById('approvedDrivers').innerHTML =
+    (approved.length === 0 ? '<p style="color:#999;">No approved drivers yet.</p>' :
+    approved.map(d => `
+      <div class="card completed">
+        <span class="badge completed">APPROVED</span>
+        <div style="margin-top:8px;">
+          <strong>${d.name}</strong> — ${d.phone}<br>
+          Driver ID: <strong>${d.id}</strong><br>
+          Area: ${d.area}
+        </div>
+        ${d.folderUrl ? `<div style="margin-top:6px;font-size:12px;">📁 <a href="${d.folderUrl}" target="_blank">View Documents</a></div>` : ''}
+      </div>`).join(''));
 }
 
 async function approveDriver(id) {
+  if (!confirm('Approve this driver? They can start accepting rides.')) return;
   await apiCall({ action: 'driverApprove', driverId: id, status: 'APPROVED', approvedBy: 'Admin' });
-  showToast('✅ Driver approved'); loadAdmin();
+  showToast('✅ Driver approved');
+  loadDriverApps();
 }
+
 async function rejectDriver(id) {
   if (!confirm('Reject this driver?')) return;
   await apiCall({ action: 'driverApprove', driverId: id, status: 'REJECTED', approvedBy: 'Admin' });
-  showToast('Driver rejected'); loadAdmin();
+  showToast('Driver rejected');
+  loadDriverApps();
 }
+
 loadAdmin();
 setInterval(loadAdmin, 60000);
 </script>
