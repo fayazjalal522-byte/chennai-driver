@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DriveEase — Book Now</title>
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#ff6b35">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /><link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#ff6b35">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,11 +16,16 @@
   <div id="formView">
     <h1 data-i18n="app_title">🚗 DriveEase</h1>
     <p class="sub" data-i18n="app_subtitle">Verified drivers • Fixed rates • 24/7</p>
+
     <label data-i18n="your_name_required">Your Name *</label>
     <input type="text" id="name" data-i18n-placeholder="full_name">
+
     <label data-i18n="phone_required">Phone *</label>
-    <input type="tel" id="phone" data-i18n-placeholder="phone_placeholder" maxlength="10">    <label>Email (for confirmation, optional)</label>
+    <input type="tel" id="phone" data-i18n-placeholder="phone_placeholder" maxlength="10">
+
+    <label>Email (for confirmation, optional)</label>
     <input type="email" id="email" placeholder="your@email.com">
+
     <label data-i18n="pickup_required">Pickup Location *</label>
     <button class="btn-blue" onclick="handleAutoDetect()" id="detectBtn" style="margin-top:0;margin-bottom:8px;">
       <span id="detectBtnText" data-i18n="detect_location">📍 Auto-detect my area</span>
@@ -34,29 +39,33 @@
       <option>Chennai Airport</option><option>Besant Nagar</option>
       <option>Chromepet</option><option>Guindy</option><option>Other</option>
     </select>
+
     <label data-i18n="drop_required">Drop Location *</label>
     <input type="text" id="drop" data-i18n-placeholder="drop_placeholder">
 
     <label data-i18n="service_required">Service Type *</label>
     <select id="service" onchange="updatePrice()">
-      <option value="hourly" data-i18n="svc_hourly">Hourly (₹500 for 4 hrs, +₹100/hr)</option>
-      <option value="full_day" data-i18n="svc_full_day">Full Day (8 hrs) — ₹900</option>
-      <option value="local_round" data-i18n="svc_local_round">Local Round Trip (₹500 for 4 hrs, +₹100/hr)</option>
-      <option value="outstation" data-i18n="svc_outstation">Outstation (One-way, ₹5/km, min ₹1,500)</option>
-      <option value="outstation_round" data-i18n="svc_outstation_round">Outstation Round Trip (₹5/km, min ₹2,500)</option>
+      <option value="hourly" data-i18n="svc_hourly">Hourly (₹400 for 1-3 hrs, ₹500 for 4 hrs, +₹100/hr after)</option>
+      <option value="outstation" data-i18n="svc_outstation">Outstation One-way (₹5/km + bus fare, min ₹1,500)</option>
+      <option value="outstation_round" data-i18n="svc_outstation_round">Outstation Round Trip (₹5/km both ways, min ₹2,500)</option>
     </select>
 
     <div id="hoursField" style="display:none;">
       <label data-i18n="hours_needed">How many hours? *</label>
       <select id="hours" onchange="updatePrice()">
-        <option value="4">4 hours</option>
-        <option value="5">5 hours</option>
-        <option value="6">6 hours</option>
-        <option value="7">7 hours</option>
-        <option value="8">8 hours</option>
-        <option value="9">9 hours</option>
-        <option value="10">10 hours</option>
-        <option value="12">12 hours</option>
+        <option value="1">1 hour — ₹400</option>
+        <option value="2">2 hours — ₹400</option>
+        <option value="3">3 hours — ₹400</option>
+        <option value="4">4 hours — ₹500</option>
+        <option value="5">5 hours — ₹600</option>
+        <option value="6">6 hours — ₹700</option>
+        <option value="7">7 hours — ₹800</option>
+        <option value="8">8 hours — ₹900</option>
+        <option value="9">9 hours — ₹1,000</option>
+        <option value="10">10 hours — ₹1,100</option>
+        <option value="11">11 hours — ₹1,200</option>
+        <option value="12">12 hours — ₹1,300</option>
+        <option value="24">24 hours (Full Day) — ₹2,000</option>
       </select>
     </div>
 
@@ -67,14 +76,20 @@
 
     <label data-i18n="date_time_required">Date & Time *</label>
     <input type="datetime-local" id="datetime">
+
     <label data-i18n="car_model">Car Model (optional)</label>
     <input type="text" id="car" data-i18n-placeholder="car_placeholder">
 
     <div class="price-box">
-      <span data-i18n="estimated_fare">Estimated fare</span>: <strong>₹<span id="priceValue">500</span></strong>
+      <span data-i18n="estimated_fare">Estimated fare</span>: <strong>₹<span id="priceValue">400</span></strong>
+      <div id="priceNote" style="font-size:12px;color:#666;margin-top:4px;"></div>
     </div>
+
     <button onclick="bookDriver()" id="bookBtn" data-i18n="book_now">Book Driver Now</button>
-    <div class="contact"><span data-i18n="or_call">Or call</span>: <a href="tel:+917845199014">+91 78451 99014</a></div>
+
+    <div class="contact">
+      <span data-i18n="or_call">Or call</span>: <a href="tel:+917845199014">+91 78451 99014</a>
+    </div>
   </div>
 
   <div class="success" id="successView">
@@ -82,7 +97,6 @@
     <p id="confirmMsg"></p>
     <div class="card" id="bookingCard"></div>
 
-    <!-- OTP DISPLAY -->
     <div id="otpPanel" class="card" style="display:none;background:linear-gradient(135deg,#fff8f3,#ffe4cc);border-left-color:#ff6b35;text-align:center;margin-top:16px;">
       <div style="font-size:16px;font-weight:700;color:#ff6b35;margin-bottom:8px;" data-i18n="otp_title">🔐 Verification</div>
       <div style="font-size:13px;color:#666;margin-bottom:10px;" data-i18n="otp_instruction">Share this OTP with driver</div>
@@ -90,27 +104,23 @@
       <div id="otpTimer" style="font-size:13px;color:#666;margin-top:8px;"></div>
     </div>
 
-    <!-- RIDE IN PROGRESS (TIMER) -->
     <div id="rideProgressPanel" class="card" style="display:none;background:#f0fdf4;border-left-color:#22c55e;margin-top:16px;">
       <div style="font-size:16px;font-weight:700;color:#22c55e;margin-bottom:8px;" data-i18n="ride_in_progress">🟢 Ride in Progress</div>
       <div style="text-align:center;font-size:32px;font-weight:700;color:#22c55e;font-family:monospace;padding:12px;" id="liveTimer">00:00:00</div>
       <div style="font-size:12px;color:#666;text-align:center;" id="rideStartInfo"></div>
     </div>
 
-    <!-- RIDE COMPLETED (SUMMARY) -->
     <div id="rideCompletedPanel" class="card" style="display:none;background:#f0fdf4;border-left-color:#22c55e;margin-top:16px;">
       <div style="font-size:16px;font-weight:700;color:#22c55e;margin-bottom:8px;" data-i18n="ride_completed_title">✅ Ride Completed</div>
       <div style="font-size:14px;line-height:1.8;" id="rideSummary"></div>
     </div>
 
-    <!-- LIVE TRACKING -->
     <div id="trackingPanel" style="display:none; margin-top:16px;">
       <button class="btn-blue" onclick="toggleTracking()" id="trackBtn" data-i18n="track_driver">📍 Track Driver</button>
       <div id="trackingMap"></div>
       <div id="trackingStatus" style="text-align:center; font-size:13px; color:#666; margin-top:8px;"></div>
     </div>
 
-    <!-- CHAT -->
     <div id="chatPanel" style="display:none; margin-top:16px;">
       <button class="btn-blue" onclick="toggleChat()" data-i18n="chat">💬 Chat</button>
     </div>
@@ -121,7 +131,6 @@
     <button class="btn-blue" onclick="shareWhatsApp()" data-i18n="share_whatsapp">📱 Share on WhatsApp</button>
     <button class="btn-secondary" onclick="location.reload()" data-i18n="book_another">Book Another</button>
 
-    <!-- PAYMENT MODAL -->
     <div id="paymentModal" style="display:none; margin-top:20px; padding:16px; background:#fff8f3; border-radius:12px;">
       <h3 data-i18n="scan_to_pay">Scan to Pay</h3>
       <div id="qrContainer" style="display:flex;justify-content:center;padding:10px;background:#fff;border-radius:10px;">
@@ -130,7 +139,6 @@
       <button class="btn-green" onclick="markAsPaid()" data-i18n="ive_paid">✅ I've Paid</button>
     </div>
 
-    <!-- RATING -->
     <div id="ratingView" style="display:none; margin-top:20px;">
       <h3 data-i18n="rate_driver">⭐ Rate Your Driver</h3>
       <div class="stars" id="starRating">
@@ -161,8 +169,8 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="i18n.js?v=11"></script>
-<script src="app.js?v=11"></script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
 <script>
 let lastBooking = null, selectedRating = 0;
 let customerMap = null, driverMarker = null, trackingInterval = null, trackingActive = false;
@@ -173,47 +181,58 @@ function updatePrice() {
   const svc = document.getElementById('service').value;
   const hoursField = document.getElementById('hoursField');
   const kmField = document.getElementById('kmField');
-  const kmLabel = document.getElementById('kmLabel');
-  let price = 500;
+  const priceNote = document.getElementById('priceNote');
+  let price = 400;
+  let note = '';
 
   hoursField.style.display = 'none';
   kmField.style.display = 'none';
+  priceNote.textContent = '';
 
-  if (svc === 'hourly' || svc === 'local_round') {
+  if (svc === 'hourly') {
     hoursField.style.display = 'block';
-    const hrs = parseInt(document.getElementById('hours').value) || 4;
-    if (hrs <= 4) price = 500;
+    const hrs = parseInt(document.getElementById('hours').value) || 1;
+    if (hrs <= 3) price = 400;
+    else if (hrs === 4) price = 500;
+    else if (hrs === 24) price = 2000;
     else price = 500 + (hrs - 4) * 100;
-  } else if (svc === 'full_day') {
-    price = 900;
   } else if (svc === 'outstation') {
     kmField.style.display = 'block';
-    kmLabel.textContent = 'Total Kilometers (one-way) *';
+    document.getElementById('kmLabel').textContent = 'Total Kilometers (one-way) *';
     const km = parseInt(document.getElementById('km').value) || 0;
-    price = km > 0 ? Math.max(km * 5, 1500) : 1500;
+    if (km > 0) {
+      price = Math.max(km * 5, 1500);
+      note = '+ bus fare (paid in cash)';
+    } else {
+      price = 1500;
+      note = 'Min ₹1,500. Enter km for exact fare.';
+    }
   } else if (svc === 'outstation_round') {
     kmField.style.display = 'block';
-    kmLabel.textContent = 'Total Kilometers (both ways) *';
+    document.getElementById('kmLabel').textContent = 'Total Kilometers (both ways) *';
     const km = parseInt(document.getElementById('km').value) || 0;
-    price = km > 0 ? Math.max(km * 5, 2500) : 2500;
+    if (km > 0) {
+      price = Math.max(km * 5, 2500);
+    } else {
+      price = 2500;
+      note = 'Min ₹2,500. Enter km for exact fare.';
+    }
   }
 
   document.getElementById('priceValue').textContent = price;
+  if (note) document.getElementById('priceNote').textContent = note;
   return price;
 }
 
 function getServiceDescription() {
   const svc = document.getElementById('service').value;
   const price = document.getElementById('priceValue').textContent;
-  if (svc === 'hourly' || svc === 'local_round') {
+  if (svc === 'hourly') {
     const hrs = document.getElementById('hours').value;
-    const label = svc === 'local_round' ? 'Local Round Trip' : 'Hourly';
-    return `${label} — ${hrs} hours — ₹${price}`;
-  } else if (svc === 'full_day') {
-    return `Full Day (8 hrs) — ₹900`;
+    return `Hourly — ${hrs} hours — ₹${price}`;
   } else if (svc === 'outstation') {
     const km = document.getElementById('km').value || 0;
-    return `Outstation One-way — ${km} km — ₹${price}`;
+    return `Outstation One-way — ${km} km — ₹${price} + bus fare`;
   } else if (svc === 'outstation_round') {
     const km = document.getElementById('km').value || 0;
     return `Outstation Round Trip — ${km} km — ₹${price}`;
@@ -240,6 +259,7 @@ async function handleAutoDetect() {
 async function bookDriver() {
   const name = document.getElementById('name').value.trim();
   const phone = document.getElementById('phone').value.trim();
+  const email = document.getElementById('email').value.trim();
   const pickupEl = document.getElementById('pickup');
   const pickup = pickupEl.options[pickupEl.selectedIndex].text;
   const drop = document.getElementById('drop').value.trim();
@@ -248,7 +268,7 @@ async function bookDriver() {
   const fare = document.getElementById('priceValue').textContent;
   const datetime = document.getElementById('datetime').value;
   const car = document.getElementById('car').value.trim();
-  const email = document.getElementById('email') ? document.getElementById('email').value.trim() : '';
+
   if (!name || phone.length !== 10 || !pickupEl.value || !drop || !datetime) {
     showToast(t('fill_fields')); return;
   }
@@ -258,7 +278,8 @@ async function bookDriver() {
 
   const btn = document.getElementById('bookBtn');
   btn.disabled = true; btn.textContent = t('booking');
-   lastBooking = { name, phone, pickup, drop, service, datetime, car, fare, email };
+  lastBooking = { name, phone, email, pickup, drop, service, datetime, car, fare };
+
   try {
     const result = await createBooking(lastBooking);
     if (result.ok) {
@@ -290,7 +311,6 @@ function pollBookingStatus(id) {
     if (!b) return;
     updateCustomerView(b);
   }, 5000);
-  // Immediate first check
   (async () => {
     const all = await listBookings();
     const b = all.find(x => x.id === id);
@@ -299,7 +319,6 @@ function pollBookingStatus(id) {
 }
 
 function updateCustomerView(b) {
-  // Tracking + chat enabled after driver accepts
   if (b.status === 'ACCEPTED' || b.status === 'AWAITING_OTP' || b.status === 'IN_PROGRESS') {
     document.getElementById('trackingPanel').style.display = 'block';
     document.getElementById('chatPanel').style.display = 'block';
@@ -308,7 +327,6 @@ function updateCustomerView(b) {
     document.getElementById('chatPanel').style.display = 'none';
   }
 
-  // OTP display
   if (b.status === 'AWAITING_OTP') {
     showOTP(b.id);
   } else {
@@ -316,7 +334,6 @@ function updateCustomerView(b) {
     if (otpCountdownInterval) { clearInterval(otpCountdownInterval); otpCountdownInterval = null; }
   }
 
-  // Ride in progress
   if (b.status === 'IN_PROGRESS') {
     document.getElementById('rideProgressPanel').style.display = 'block';
     document.getElementById('otpPanel').style.display = 'none';
@@ -330,20 +347,17 @@ function updateCustomerView(b) {
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
   }
 
-  // Ride completed
   if (b.status === 'COMPLETED') {
     document.getElementById('rideCompletedPanel').style.display = 'block';
     document.getElementById('otpPanel').style.display = 'none';
     document.getElementById('rideProgressPanel').style.display = 'none';
-    const baseFare = 500;
-    const extra = Number(b.extraCharge) || 0;
     const total = Number(b.fare) || 0;
+    const extra = Number(b.extraCharge) || 0;
     document.getElementById('rideSummary').innerHTML = `
       <div>${t('started_at')}: ${b.startTime ? new Date(b.startTime).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '—'}</div>
       <div>${t('ended_at')}: ${b.endTime ? new Date(b.endTime).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '—'}</div>
       <div>${t('duration')}: <strong>${formatDuration(b.durationMins)}</strong></div>
       <hr style="margin:8px 0;border:none;border-top:1px dashed #22c55e;">
-      <div>${t('base_fare')}: ₹${baseFare}</div>
       ${extra > 0 ? `<div style="color:#ef4444;">${t('extra_charge')}: +₹${extra}</div>` : ''}
       <div style="font-size:18px;font-weight:700;color:#ff6b35;margin-top:6px;">${t('total_fare')}: ₹${total}</div>
       <div style="font-size:12px;color:#666;margin-top:8px;">${t('paying_cash')}</div>`;
@@ -461,7 +475,6 @@ async function showPayment() {
   const modal = document.getElementById('paymentModal');
   modal.style.display = 'block';
   const qrBox = document.getElementById('qrContainer');
-  qrBox.innerHTML = `<div class="spinner">${t('generating_qr')}</div>`;
   qrBox.innerHTML = `<div style="text-align:center;padding:10px;"><p style="color:#c00;font-size:13px;">${t('online_not_configured')}</p><p style="font-size:13px;margin-top:8px;">${t('pay_cash', { amount: '₹' + lastBooking.fare })}</p></div>`;
 }
 
