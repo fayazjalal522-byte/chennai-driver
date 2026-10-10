@@ -65,10 +65,14 @@
     <input type="text" id="drop" data-i18n-placeholder="drop_placeholder">
 
     <label data-i18n="service_required">Service Type *</label>
+    <select id="service">
+      <option value="hourly" data-i18n="svc_hourly">Hourly (₹400 for 1-3 hrs, ₹500 for 4 hrs, +₹100/hr after)</option>
+      <option value="outstation" data-i18n="svc_outstation">Outstation One-way (₹5/km + bus fare, min ₹1,500)</option>
+      <option value="outstation_round" data-i18n="svc_outstation_round">Outstation Round Trip (₹5/km both ways, min ₹2,500)</option>
+    </select>
 
     <div id="hoursField" style="display:none;">
       <label data-i18n="hours_needed">How many hours? *</label>
-      <select id="service">
         <option value="1">1 hour — ₹400</option>
         <option value="2">2 hours — ₹400</option>
         <option value="3">3 hours — ₹400</option>
@@ -215,8 +219,8 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="i18n.js?v=22"></script>
-<script src="app.js?v=22"></script>
+<script src="i18n.js?v=24"></script>
+<script src="app.js?v=24"></script>
 <script>
 let lastBooking = null, selectedRating = 0;
 let customerMap = null, driverMarker = null, trackingInterval = null, trackingActive = false;
