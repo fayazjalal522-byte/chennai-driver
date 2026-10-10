@@ -14,14 +14,12 @@
     <p class="sub">Join DriveEase — Chennai's trusted driver network</p>
 
     <div class="card" style="background:#f0fdf4;border-left-color:#22c55e;font-size:13px;">
-      <strong>💰 Earn ₹500–1,500 per booking</strong><br>
+      <strong>💰 Earn ₹400–1,300 per booking</strong><br>
       ✅ Keep 90% of every ride<br>
       ✅ Daily settlement<br>
-      ✅ Flexible timing<br>
-      ✅ No investment needed
+      ✅ Flexible timing
     </div>
 
-    <!-- PERSONAL INFO -->
     <h3 style="color:#ff6b35;margin-top:20px;">👤 Personal Info</h3>
     <label>Full Name *</label>
     <input type="text" id="name" placeholder="As per license">
@@ -29,7 +27,12 @@
     <label>Phone Number *</label>
     <input type="tel" id="phone" maxlength="10" placeholder="10-digit mobile">
 
-    <!-- LICENSE -->
+    <label>Set 4-digit PIN *</label>
+    <input type="password" id="pin" maxlength="4" pattern="[0-9]{4}" placeholder="4 digits" inputmode="numeric">
+
+    <label>Confirm PIN *</label>
+    <input type="password" id="pinConfirm" maxlength="4" pattern="[0-9]{4}" placeholder="Re-enter PIN" inputmode="numeric">
+
     <h3 style="color:#ff6b35;margin-top:20px;">🪪 Driving License</h3>
     <label>License Number *</label>
     <input type="text" id="licenseNo" placeholder="TN0120180012345" style="text-transform:uppercase;">
@@ -38,7 +41,6 @@
     <input type="file" id="licenseFile" accept="image/*" capture="environment" style="padding:8px;background:#f9f9f9;">
     <div id="licensePreview" style="font-size:12px;color:#22c55e;margin-top:4px;"></div>
 
-    <!-- AADHAAR -->
     <h3 style="color:#ff6b35;margin-top:20px;">🆔 Aadhaar Verification</h3>
     <label>Aadhaar Last 4 Digits *</label>
     <input type="text" id="aadhaarLast4" maxlength="4" pattern="[0-9]{4}" placeholder="XXXX">
@@ -51,13 +53,17 @@
     <input type="file" id="aadhaarBackFile" accept="image/*" capture="environment" style="padding:8px;background:#f9f9f9;">
     <div id="aadhaarBackPreview" style="font-size:12px;color:#22c55e;margin-top:4px;"></div>
 
-    <!-- SELFIE -->
     <h3 style="color:#ff6b35;margin-top:20px;">🤳 Selfie Verification</h3>
     <label>Upload Selfie with License *</label>
     <input type="file" id="selfieFile" accept="image/*" capture="user" style="padding:8px;background:#f9f9f9;">
     <div id="selfiePreview" style="font-size:12px;color:#22c55e;margin-top:4px;"></div>
 
-    <!-- VEHICLE & EXPERIENCE -->
+    <h3 style="color:#ff6b35;margin-top:20px;">🛡️ Police Verification (Optional)</h3>
+    <label>Upload Police Verification Certificate (optional)</label>
+    <input type="file" id="policeFile" accept="image/*" style="padding:8px;background:#f9f9f9;">
+    <div id="policePreview" style="font-size:12px;color:#22c55e;margin-top:4px;"></div>
+    <div style="font-size:12px;color:#666;margin-top:4px;">Verified drivers get a 🛡️ badge and more bookings.</div>
+
     <h3 style="color:#ff6b35;margin-top:20px;">🚗 Vehicle & Experience</h3>
     <label>Vehicle You Can Drive *</label>
     <select id="vehicle">
@@ -84,7 +90,7 @@
     </select>
 
     <div style="font-size:12px;color:#666;margin-top:16px;line-height:1.5;background:#f9f9f9;padding:12px;border-radius:8px;">
-      <strong>🔒 Privacy:</strong> Your Aadhaar (front + back), license, and selfie are stored securely in an encrypted Google Drive folder. They are used only for identity verification and address proof, and are never shared with anyone.
+      <strong>🔒 Privacy:</strong> Your documents are stored securely in an encrypted Google Drive folder. They are used only for identity verification and never shared.
     </div>
 
     <button onclick="submitApplication()" id="submitBtn">Submit Application</button>
@@ -101,7 +107,7 @@
   </div>
 </div>
 
-<script src="app.js?v=10"></script>
+<script src="app.js?v=13"></script>
 <script>
 function previewFile(inputId, previewId) {
   const input = document.getElementById(inputId);
@@ -119,6 +125,7 @@ previewFile('licenseFile', 'licensePreview');
 previewFile('aadhaarFile', 'aadhaarPreview');
 previewFile('aadhaarBackFile', 'aadhaarBackPreview');
 previewFile('selfieFile', 'selfiePreview');
+previewFile('policeFile', 'policePreview');
 
 function resizeImage(file, maxWidth = 900, quality = 0.7) {
   return new Promise((resolve, reject) => {
@@ -152,6 +159,8 @@ function resizeImage(file, maxWidth = 900, quality = 0.7) {
 async function submitApplication() {
   const name = document.getElementById('name').value.trim();
   const phone = document.getElementById('phone').value.trim();
+  const pin = document.getElementById('pin').value.trim();
+  const pinConfirm = document.getElementById('pinConfirm').value.trim();
   const licenseNo = document.getElementById('licenseNo').value.trim().toUpperCase();
   const aadhaarLast4 = document.getElementById('aadhaarLast4').value.trim();
   const vehicle = document.getElementById('vehicle').value;
@@ -162,10 +171,13 @@ async function submitApplication() {
   const aadhaarFile = document.getElementById('aadhaarFile').files[0];
   const aadhaarBackFile = document.getElementById('aadhaarBackFile').files[0];
   const selfieFile = document.getElementById('selfieFile').files[0];
+  const policeFile = document.getElementById('policeFile').files[0];
 
   if (!name || phone.length !== 10 || !licenseNo || aadhaarLast4.length !== 4 || !vehicle || !experience || !area) {
     showToast('Please fill all required fields'); return;
   }
+  if (!pin || pin.length !== 4) { showToast('Please set a 4-digit PIN'); return; }
+  if (pin !== pinConfirm) { showToast('PIN and Confirm PIN do not match'); return; }
   if (!licenseFile) { showToast('Please upload license photo'); return; }
   if (!aadhaarFile) { showToast('Please upload Aadhaar front photo'); return; }
   if (!aadhaarBackFile) { showToast('Please upload Aadhaar back photo'); return; }
@@ -180,11 +192,12 @@ async function submitApplication() {
     const aadhaarData = await resizeImage(aadhaarFile);
     const aadhaarBackData = await resizeImage(aadhaarBackFile);
     const selfieData = await resizeImage(selfieFile);
+    const policeData = policeFile ? await resizeImage(policeFile) : '';
 
     const res = await apiCall({
       action: 'driverApplyWithDocs',
-      name, phone, licenseNo, aadhaarLast4, vehicle, experience, area,
-      licenseData, aadhaarData, aadhaarBackData, selfieData
+      name, phone, licenseNo, aadhaarLast4, vehicle, experience, area, pin,
+      licenseData, aadhaarData, aadhaarBackData, selfieData, policeData
     });
 
     if (res.ok) {
@@ -194,7 +207,7 @@ async function submitApplication() {
       document.getElementById('appCard').innerHTML = `
         <strong>Application ID:</strong> ${res.driverId}<br>
         <strong>Status:</strong> <span style="color:#f59e0b;">PENDING VERIFICATION</span><br>
-        <strong>Docs uploaded:</strong> ✅ License ✅ Aadhaar Front ✅ Aadhaar Back ✅ Selfie
+        <strong>Docs uploaded:</strong> ✅ License ✅ Aadhaar Front ✅ Aadhaar Back ✅ Selfie ${policeFile ? '✅ Police Cert' : ''}
       `;
     } else {
       showToast(res.error || 'Application failed');

@@ -173,3 +173,52 @@ function getElapsedTime(startTimeStr) {
   const s = (diff % 60).toString().padStart(2, '0');
   return `${h}:${m}:${s}`;
 }
+
+// ================================================================
+// DRIVER LOGIN / PIN / BLACKLIST / COMPLAINTS
+// ================================================================
+
+async function driverLogin(phone, pin) {
+  return apiCall({ action: 'driverLogin', phone, pin });
+}
+
+async function resetPin(driverId) {
+  return apiCall({ action: 'resetPin', driverId });
+}
+
+async function setNewPin(phone, newPin) {
+  return apiCall({ action: 'setNewPin', phone, newPin });
+}
+
+async function blacklistDriver(driverId, blacklist) {
+  return apiCall({ action: 'blacklistDriver', driverId, blacklist });
+}
+
+async function submitComplaint(complaint) {
+  return apiCall({ action: 'submitComplaint', ...complaint });
+}
+
+async function getComplaintList() {
+  const d = await apiCall({ action: 'complaintList' });
+  return d.complaints || [];
+}
+
+async function resolveComplaint(complaintId, status) {
+  return apiCall({ action: 'complaintResolve', complaintId, status });
+}
+
+function getLoggedInDriver() {
+  const d = localStorage.getItem('loggedDriver');
+  return d ? JSON.parse(d) : null;
+}
+
+function saveLoggedInDriver(driver) {
+  localStorage.setItem('loggedDriver', JSON.stringify(driver));
+  localStorage.setItem('driverName', driver.name);
+}
+
+function logoutDriver() {
+  localStorage.removeItem('loggedDriver');
+  localStorage.removeItem('driverName');
+  localStorage.removeItem('driverStatus');
+}

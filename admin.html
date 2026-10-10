@@ -19,6 +19,9 @@
   <div class="stats-grid" id="statsGrid"></div>
   <button onclick="loadAdmin()" data-i18n="refresh">🔄 Refresh</button>
 
+  <h3>⚠️ Complaints</h3>
+  <div id="complaintsList">Loading...</div>
+
   <h3>🚗 Pending Driver Applications</h3>
   <div id="driverApps"></div>
 
@@ -29,8 +32,8 @@
   <div id="adminList"></div>
 </div>
 
-<script src="i18n.js?v=10"></script>
-<script src="app.js?v=10"></script>
+<script src="i18n.js?v=13"></script>
+<script src="app.js?v=13"></script>
 <script>
 async function loadAdmin() {
   document.getElementById('adminList').innerHTML = `<div class="spinner">${t('loading')}</div>`;
@@ -73,6 +76,7 @@ async function loadAdmin() {
   }).join('') || `<p style="text-align:center;color:#999;">${t('no_bookings')}</p>`;
 
   loadDriverApps();
+  loadComplaints();
 }
 
 async function loadDriverApps() {
@@ -100,6 +104,7 @@ async function loadDriverApps() {
           ${d.aadhaarUrl ? `🆔 <a href="${d.aadhaarUrl}" target="_blank">View Aadhaar Front</a><br>` : '<span style="color:#ef4444;">❌ Aadhaar Front missing</span><br>'}
           ${d.aadhaarBackUrl ? `🆔 <a href="${d.aadhaarBackUrl}" target="_blank">View Aadhaar Back</a><br>` : '<span style="color:#ef4444;">❌ Aadhaar Back missing</span><br>'}
           ${d.selfieUrl ? `🤳 <a href="${d.selfieUrl}" target="_blank">View Selfie</a><br>` : '<span style="color:#999;">🤳 Selfie not uploaded</span><br>'}
+          ${d.policeUrl ? `🛡️ <a href="${d.policeUrl}" target="_blank">View Police Certificate</a><br>` : '<span style="color:#999;">🛡️ Police cert not provided</span><br>'}
           ${d.folderUrl ? `<br>📁 <a href="${d.folderUrl}" target="_blank">Open Full Folder in Drive</a>` : ''}
         </div>
         <div class="row">
@@ -111,15 +116,49 @@ async function loadDriverApps() {
   document.getElementById('approvedDrivers').innerHTML =
     (approved.length === 0 ? '<p style="color:#999;">No approved drivers yet.</p>' :
     approved.map(d => `
-      <div class="card completed">
+      <div class="card completed" style="${d.blacklisted === 'Yes' ? 'border-left-color:#ef4444;background:#fef2f2;' : ''}">
         <span class="badge completed">APPROVED</span>
+        ${d.blacklisted === 'Yes' ? '<span class="badge" style="background:#fee2e2;color:#991b1b;margin-left:6px;">🚫 BLACKLISTED</span>' : ''}
         <div style="margin-top:8px;">
           <strong>${d.name}</strong> — ${d.phone}<br>
           Driver ID: <strong>${d.id}</strong><br>
           Area: ${d.area}
+          ${d.policeUrl ? ' • 🛡️ Police Verified' : ''}
         </div>
         ${d.folderUrl ? `<div style="margin-top:6px;font-size:12px;">📁 <a href="${d.folderUrl}" target="_blank">View Documents</a></div>` : ''}
+        <div class="row" style="margin-top:8px;">
+          <button class="btn-blue" onclick="resetPinHandler('${d.id}')" style="font-size:12px;padding:6px;">🔐 Reset PIN</button>
+          ${d.blacklisted === 'Yes' 
+            ? `<button class="btn-green" onclick="blacklistHandler('${d.id}', false)" style="font-size:12px;padding:6px;">✅ Un-blacklist</button>` 
+            : `<button class="btn-red" onclick="blacklistHandler('${d.id}', true)" style="font-size:12px;padding:6px;">🚫 Blacklist</button>`}
+        </div>
       </div>`).join(''));
+}
+
+async function loadComplaints() {
+  const complaints = await getComplaintList();
+  const container = document.getElementById('complaintsList');
+  if (!complaints || complaints.length === 0) {
+    container.innerHTML = '<p style="color:#999;">No complaints yet.</p>';
+    return;
+  }
+  container.innerHTML = complaints.reverse().map(c => `
+    <div class="card ${c.status === 'RESOLVED' ? 'completed' : 'pending'}">
+      <span class="badge ${c.status === 'RESOLVED' ? 'completed' : 'pending'}">${c.status}</span>
+      <strong style="margin-left:6px;">${c.id}</strong>
+      <div style="margin-top:8px;font-size:13px;">
+        ${c.customerName || 'Anonymous'} ${c.customerPhone ? `• <a href="tel:${c.customerPhone}">${c.customerPhone}</a>` : ''}<br>
+        <strong>Reason:</strong> ${c.reason}<br>
+        ${c.details ? `<strong>Details:</strong> ${c.details}<br>` : ''}
+        ${c.bookingId ? `<strong>Booking:</strong> ${c.bookingId}<br>` : ''}
+        <em style="color:#999;font-size:11px;">${new Date(c.timestamp).toLocaleString('en-IN')}</em>
+      </div>
+      ${c.status === 'OPEN' ? `
+        <div class="row" style="margin-top:8px;">
+          <button class="btn-green" onclick="resolveComplaintHandler('${c.id}')" style="font-size:12px;padding:6px;">✅ Mark Resolved</button>
+        </div>` : ''}
+    </div>
+  `).join('');
 }
 
 async function approveDriver(id) {
@@ -134,6 +173,37 @@ async function rejectDriver(id) {
   await apiCall({ action: 'driverApprove', driverId: id, status: 'REJECTED', approvedBy: 'Admin' });
   showToast('Driver rejected');
   loadDriverApps();
+}
+
+async function resetPinHandler(driverId) {
+  if (!confirm('Reset PIN for this driver? They will get temporary PIN 0000.')) return;
+  const res = await resetPin(driverId);
+  if (res.ok) {
+    showToast('✅ PIN reset to 0000. Tell driver to login with 0000.');
+  } else {
+    showToast('Failed to reset');
+  }
+}
+
+async function blacklistHandler(driverId, shouldBlacklist) {
+  const action = shouldBlacklist ? 'blacklist' : 'un-blacklist';
+  if (!confirm(`Are you sure you want to ${action} this driver?`)) return;
+  const res = await blacklistDriver(driverId, shouldBlacklist);
+  if (res.ok) {
+    showToast(`✅ Driver ${action}ed`);
+    loadDriverApps();
+  } else {
+    showToast('Failed');
+  }
+}
+
+async function resolveComplaintHandler(complaintId) {
+  if (!confirm('Mark this complaint as resolved?')) return;
+  const res = await resolveComplaint(complaintId, 'RESOLVED');
+  if (res.ok) {
+    showToast('✅ Marked resolved');
+    loadComplaints();
+  }
 }
 
 loadAdmin();
