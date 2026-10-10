@@ -557,15 +557,34 @@ async function submitComplaintClick() {
     showToast('Failed. Please call us directly.');
   }
 }// Bind all pricing inputs after DOM is ready
-setTimeout(function() {
+// Bind pricing listeners with retry (i18n may rebind elements)
+function bindPricingListeners() {
   const svcEl = document.getElementById('service');
   const hrsEl = document.getElementById('hours');
   const kmEl = document.getElementById('km');
-  if (svcEl) svcEl.addEventListener('change', updatePrice);
-  if (hrsEl) hrsEl.addEventListener('change', updatePrice);
-  if (kmEl) kmEl.addEventListener('input', updatePrice);
-  console.log('✅ All pricing listeners attached');
-}, 500);
+  if (!svcEl || !hrsEl) return false;
+  
+  // Remove existing listeners by cloning (prevents duplicates)
+  const newSvc = svcEl.cloneNode(true);
+  svcEl.parentNode.replaceChild(newSvc, svcEl);
+  newSvc.addEventListener('change', updatePrice);
+  
+  const newHrs = hrsEl.cloneNode(true);
+  hrsEl.parentNode.replaceChild(newHrs, hrsEl);
+  newHrs.addEventListener('change', updatePrice);
+  
+  if (kmEl) {
+    const newKm = kmEl.cloneNode(true);
+    kmEl.parentNode.replaceChild(newKm, kmEl);
+    newKm.addEventListener('input', updatePrice);
+  }
+  
+  console.log('✅ Pricing listeners attached');
+  return true;
+}
+
+// Try immediately, then retry after 300ms, 800ms, 1500ms (in case i18n overwrites)
+[0, 300, 800, 1500].forEach(delay => setTimeout(bindPricingListeners, delay));
 </script>
 </body>
 </html>
