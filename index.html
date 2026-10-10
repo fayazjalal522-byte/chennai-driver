@@ -55,7 +55,7 @@
       <option value="outstation_round" data-i18n="svc_outstation_round">Outstation Round Trip (₹5/km both ways, min ₹2,500)</option>
     </select>
 
-    <div id="hoursField" style="display:none;">
+    <div id="hoursField">
       <label data-i18n="hours_needed">How many hours? *</label>
       <select id="hours" onchange="updatePrice()">
         <option value="1">1 hour — ₹400</option>
@@ -74,11 +74,9 @@
       </select>
     </div>
 
-    <div id="kmField" style="display:none;">
-      <label id="kmLabel" data-i18n="total_km">Total Kilometers *</label>
+    <div id="kmField">
+      <label id="kmLabel" data-i18n="total_km">Total Kilometers (for outstation) *</label>
       <input type="number" id="km" min="1" placeholder="e.g., 300" oninput="updatePrice()">
-
-
     </div>
 
     <label data-i18n="date_time_required">Date & Time *</label>
@@ -197,7 +195,7 @@
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">// Bind all pricing inputs after DOM is ready</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="i18n.js"></script>
 <script src="app.js"></script>
 <script>
@@ -208,28 +206,19 @@ let statusInterval = null, otpCountdownInterval = null, timerInterval = null;
 
 function updatePrice() {
   const svc = document.getElementById('service').value;
-  const hoursField = document.getElementById('hoursField');
-  const kmField = document.getElementById('kmField');
+  const hrs = parseInt(document.getElementById('hours').value) || 1;
+  const km = parseInt(document.getElementById('km').value) || 0;
   const priceNote = document.getElementById('priceNote');
   let price = 400;
   let note = '';
-
-  hoursField.style.display = 'none';
-  kmField.style.display = 'none';
   priceNote.textContent = '';
 
   if (svc === 'hourly') {
-    hoursField.style.display = 'block';
-    const hrs = parseInt(document.getElementById('hours').value) || 1;
     if (hrs <= 3) price = 400;
     else if (hrs === 4) price = 500;
     else if (hrs === 24) price = 2000;
     else price = 500 + (hrs - 4) * 100;
-    setTimeout(() => hoursField.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
   } else if (svc === 'outstation') {
-    kmField.style.display = 'block';
-    document.getElementById('kmLabel').textContent = 'Total Kilometers (one-way) *';
-    const km = parseInt(document.getElementById('km').value) || 0;
     if (km > 0) {
       price = Math.max(km * 5, 1500);
       note = '+ bus fare (paid in cash)';
@@ -237,18 +226,13 @@ function updatePrice() {
       price = 1500;
       note = 'Min ₹1,500. Enter km for exact fare.';
     }
-    setTimeout(() => kmField.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
   } else if (svc === 'outstation_round') {
-    kmField.style.display = 'block';
-    document.getElementById('kmLabel').textContent = 'Total Kilometers (both ways) *';
-    const km = parseInt(document.getElementById('km').value) || 0;
     if (km > 0) {
       price = Math.max(km * 5, 2500);
     } else {
       price = 2500;
       note = 'Min ₹2,500. Enter km for exact fare.';
     }
-    setTimeout(() => kmField.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
   }
 
   document.getElementById('priceValue').textContent = price;
@@ -558,35 +542,7 @@ async function submitComplaintClick() {
   } else {
     showToast('Failed. Please call us directly.');
   }
-}// Bind all pricing inputs after DOM is ready
-// Bind pricing listeners with retry (i18n may rebind elements)
-function bindPricingListeners() {
-  const svcEl = document.getElementById('service');
-  const hrsEl = document.getElementById('hours');
-  const kmEl = document.getElementById('km');
-  if (!svcEl || !hrsEl) return false;
-  
-  // Remove existing listeners by cloning (prevents duplicates)
-  const newSvc = svcEl.cloneNode(true);
-  svcEl.parentNode.replaceChild(newSvc, svcEl);
-  newSvc.addEventListener('change', updatePrice);
-  
-  const newHrs = hrsEl.cloneNode(true);
-  hrsEl.parentNode.replaceChild(newHrs, hrsEl);
-  newHrs.addEventListener('change', updatePrice);
-  
-  if (kmEl) {
-    const newKm = kmEl.cloneNode(true);
-    kmEl.parentNode.replaceChild(newKm, kmEl);
-    newKm.addEventListener('input', updatePrice);
-  }
-  
-  console.log('✅ Pricing listeners attached');
-  return true;
 }
-
-// Try immediately, then retry after 300ms, 800ms, 1500ms (in case i18n overwrites)
-[0, 300, 800, 1500].forEach(delay => setTimeout(bindPricingListeners, delay));
 </script>
 </body>
 </html>
