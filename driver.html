@@ -131,8 +131,8 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="i18n.js?v=13"></script>
-<script src="app.js?v=13"></script>
+<script src="i18n.js?v=42"></script>
+<script src="app.js?v=42"></script>
 <script>
 let allJobs = [], currentFilter = 'PENDING';
 let map = null, mapMarkers = [];
@@ -386,15 +386,30 @@ function renderJobs() {
     let actionButtons = '';
     if (j.status === 'PENDING') {
       actionButtons = `<div class="row"><button class="btn-green" onclick="acceptJob('${j.id}')">${t('accept')}</button></div>`;
-    } else if (j.status === 'ACCEPTED' && isMine) {
+        } else if (j.status === 'ACCEPTED' && isMine) {
       actionButtons = `
         <div class="row">
-          <button class="btn-green" onclick="startRideHandler('${j.id}')">${t('start_ride')}</button>
+          <button class="btn-green" onclick="reachedHandler('${j.id}', '${j.phone}')">📍 I've Reached</button>
           <button class="btn-red" onclick="noShowHandler('${j.id}')">${t('no_show')}</button>
         </div>
         <div class="row">
           <button class="btn-blue" onclick="toggleShareLocation('${j.id}', '${driverName}')" id="shareBtn_${j.id}">${t('share_location')}</button>
           <button class="btn-blue" onclick="openChatDriver('${j.id}')">${t('chat')}</button>
+        </div>`;
+    } else if (j.status === 'ARRIVED' && isMine) {
+      actionButtons = `
+        <div class="card" style="background:#fff8f3;border-left-color:#f59e0b;margin:8px 0;">
+          <strong>🟢 Status: ARRIVED</strong><br>
+          <div style="font-size:13px;color:#666;margin-top:4px;">Waiting for customer</div>
+          <div style="font-size:24px;font-weight:700;color:#f59e0b;text-align:center;margin-top:8px;" id="arrivalTimer_${j.id}">15:00</div>
+          <div style="font-size:11px;color:#999;text-align:center;">Auto-starts in <span id="arrivalTimer2_${j.id}">15:00</span></div>
+        </div>
+        <div class="row">
+          <button class="btn-blue" onclick="window.location.href='tel:${j.phone}'">📞 Call Customer</button>
+          <button class="btn-blue" onclick="openChatDriver('${j.id}')">💬 Chat</button>
+        </div>
+        <div class="row">
+          <button class="btn-green" onclick="startRideHandler('${j.id}')">▶️ Start Ride (Customer In)</button>
         </div>`;
     } else if (j.status === 'AWAITING_OTP' && isMine) {
       actionButtons = `
@@ -444,6 +459,8 @@ function renderJobs() {
 
   jobs.filter(j => j.status === 'IN_PROGRESS' && j.driver === driverName).forEach(j => {
     startTimerDisplay(j.id, j.startTime);
+  });  jobs.filter(j => j.status === 'ARRIVED' && j.driver === driverName).forEach(j => {
+    startArrivalCountdown(j.id, j.arrivalTime);
   });
 }
 
@@ -457,6 +474,29 @@ function startTimerDisplay(bookingId, startTime) {
   setInterval(update, 1000);
 }
 
+
+
+function startArrivalCountdown(bookingId, arrivalTime) {
+  const arrival = arrivalTime ? new Date(arrivalTime).getTime() : Date.now();
+  const interval = setInterval(() => {
+    const el1 = document.getElementById('arrivalTimer_' + bookingId);
+    const el2 = document.getElementById('arrivalTimer2_' + bookingId);
+    if (!el1 && !el2) { clearInterval(interval); return; }
+    const elapsed = Math.floor((Date.now() - arrival) / 1000);
+    const remaining = Math.max(0, 900 - elapsed);
+    const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+    const s = (remaining % 60).toString().padStart(2, '0');
+    const display = `${m}:${s}`;
+    if (el1) el1.textContent = display;
+    if (el2) el2.textContent = display;
+    if (remaining <= 0) {
+      clearInterval(interval);
+      startRide(bookingId).then(() => loadJobs());
+    }
+  }, 1000);
+}
+
+
 async function acceptJob(id) {
   const driver = getLoggedInDriver();
   if (!driver) return;
@@ -464,8 +504,35 @@ async function acceptJob(id) {
   showToast(t('job_accepted'));
   loadJobs();
 }
+function reachedHandler(id, phone) {
+  window.location.href = 'tel:' + phone;
+  setTimeout(() => {
+    markReached(id).then(res => {
+      if (res.ok) {
+        showToast('✅ Customer notified. Waiting 15 min.');
+        loadJobs();
+      } else {
+        showToast('Failed to update status');
+      }
+    });
+  }, 500);
+}
 
-function startRideHandler(id) {
+function startRideHandler(id)
+function reachedHandler(id, phone) {
+  window.location.href = 'tel:' + phone;
+  setTimeout(() => {
+    markReached(id).then(res => {
+      if (res.ok) {
+        showToast('✅ Customer notified. Waiting 15 min.');
+        loadJobs();
+      } else {
+        showToast('Failed to update status');
+      }
+    });
+  }, 500);
+}
+ {
   if (!confirm(t('start_ride_confirm'))) return;
   startRideFlow(id);
 }

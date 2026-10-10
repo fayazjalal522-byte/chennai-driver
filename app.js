@@ -222,3 +222,23 @@ function logoutDriver() {
   localStorage.removeItem('driverName');
   localStorage.removeItem('driverStatus');
 }
+
+
+// ---------------- REACHED LOCATION ----------------
+async function markReached(id) {
+  return apiCall({ action: 'markReached', id });
+}
+
+async function autoStartExpired() {
+  return apiCall({ action: 'autoStartExpired' });
+}
+
+
+// ---------------- REACHED LOCATION ----------------
+async function markReached(id) {
+  return apiCall({ action: 'markReached', id });
+}
+
+async function autoStartExpired() {
+  return apiCall({ action: 'autoStartExpired' });
+}
