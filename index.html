@@ -26,38 +26,22 @@
     <label>Email (for confirmation, optional)</label>
     <input type="email" id="email" placeholder="your@email.com">
 
-    <label data-i18n="pickup_required">Pickup Location *</label>
+    <label data-i18n="pickup_required">Pickup Location (Chennai) *</label>
     <button class="btn-blue" onclick="handleAutoDetect()" id="detectBtn" style="margin-top:0;margin-bottom:8px;">
       <span id="detectBtnText" data-i18n="detect_location">📍 Auto-detect my area</span>
     </button>
     <select id="pickup">
       <option value="" data-i18n="select_area">-- Select area --</option>
-      <option>Adyar</option>
-      <option>Anna Nagar</option>
-      <option>T. Nagar</option>
-      <option>Velachery</option>
-      <option>OMR / Sholinganallur</option>
-      <option>Tambaram</option>
-      <option>Porur</option>
-      <option>Mylapore</option>
-      <option>Egmore</option>
-      <option>Central Railway Station</option>
-      <option>Chennai Airport</option>
-      <option>Besant Nagar</option>
-      <option>Chromepet</option>
-      <option>Guindy</option>
-      <option>Ambattur</option>
-      <option>Madhavaram</option>
-      <option>Nungambakkam</option>
-      <option>Kodambakkam</option>
-      <option>Thiruvanmiyur</option>
-      <option>Avadi</option>
-      <option>Thirumullaivoyal</option>
-      <option>Pattabhiram</option>
-      <option>Padi</option>
-      <option>Villivakkam</option>
-      <option>Korattur</option>
-      <option>Mugappair</option>
+      <option>Adyar</option><option>Anna Nagar</option><option>T. Nagar</option>
+      <option>Velachery</option><option>OMR / Sholinganallur</option>
+      <option>Tambaram</option><option>Porur</option><option>Mylapore</option>
+      <option>Egmore</option><option>Central Railway Station</option>
+      <option>Chennai Airport</option><option>Besant Nagar</option>
+      <option>Chromepet</option><option>Guindy</option>
+      <option>Ambattur</option><option>Madhavaram</option><option>Nungambakkam</option>
+      <option>Kodambakkam</option><option>Thiruvanmiyur</option><option>Avadi</option>
+      <option>Thirumullaivoyal</option><option>Pattabhiram</option><option>Padi</option>
+      <option>Villivakkam</option><option>Korattur</option><option>Mugappair</option>
       <option>Other</option>
     </select>
 
@@ -65,7 +49,7 @@
     <input type="text" id="drop" data-i18n-placeholder="drop_placeholder">
 
     <label data-i18n="service_required">Service Type *</label>
-    <select id="service">
+    <select id="service" onchange="updatePrice()">
       <option value="hourly" data-i18n="svc_hourly">Hourly (₹400 for 1-3 hrs, ₹500 for 4 hrs, +₹100/hr after)</option>
       <option value="outstation" data-i18n="svc_outstation">Outstation One-way (₹5/km + bus fare, min ₹1,500)</option>
       <option value="outstation_round" data-i18n="svc_outstation_round">Outstation Round Trip (₹5/km both ways, min ₹2,500)</option>
@@ -73,6 +57,7 @@
 
     <div id="hoursField" style="display:none;">
       <label data-i18n="hours_needed">How many hours? *</label>
+      <select id="hours" onchange="updatePrice()">
         <option value="1">1 hour — ₹400</option>
         <option value="2">2 hours — ₹400</option>
         <option value="3">3 hours — ₹400</option>
@@ -170,7 +155,6 @@
       </div>
       <textarea id="reviewText" data-i18n-placeholder="feedback_placeholder" rows="3" style="margin-top:10px;"></textarea>
       <button class="btn-green" onclick="submitRatingClick()" data-i18n="submit_rating">Submit Rating</button>
-      <button class="btn-red" onclick="openComplaintModal()" style="margin-top:12px;">⚠️ Report an Issue</button>
     </div>
 
     <div id="complaintBtnWrap" style="display:none; margin-top:16px;">
@@ -182,23 +166,16 @@
 <div id="complaintModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:3000; align-items:center; justify-content:center; padding:20px;">
   <div style="background:#fff; border-radius:20px; padding:24px; max-width:420px; width:100%; max-height:90vh; overflow-y:auto;">
     <h3 style="color:#ff6b35;margin-bottom:16px;">⚠️ Report an Issue</h3>
-    
     <label>Reason *</label>
     <select id="complaintReason">
       <option value="">-- Select --</option>
-      <option>Driver behavior</option>
-      <option>Late arrival</option>
-      <option>Overcharge</option>
-      <option>Damage</option>
-      <option>Other</option>
+      <option>Driver behavior</option><option>Late arrival</option>
+      <option>Overcharge</option><option>Damage</option><option>Other</option>
     </select>
-    
     <label>Details (optional)</label>
     <textarea id="complaintDetails" rows="4" placeholder="What happened?"></textarea>
-    
     <label>Your Phone (optional)</label>
     <input type="tel" id="complaintPhone" maxlength="10" placeholder="10-digit mobile">
-    
     <button class="btn-red" onclick="submitComplaintClick()" style="margin-top:16px;">Submit Complaint</button>
     <button class="btn-secondary" onclick="closeComplaintModal()">Cancel</button>
   </div>
@@ -219,8 +196,8 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="i18n.js?v=24"></script>
-<script src="app.js?v=24"></script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
 <script>
 let lastBooking = null, selectedRating = 0;
 let customerMap = null, driverMarker = null, trackingInterval = null, trackingActive = false;
@@ -241,16 +218,14 @@ function updatePrice() {
 
   if (svc === 'hourly') {
     hoursField.style.display = 'block';
-setTimeout(() => hoursField.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
     const hrs = parseInt(document.getElementById('hours').value) || 1;
     if (hrs <= 3) price = 400;
     else if (hrs === 4) price = 500;
     else if (hrs === 24) price = 2000;
     else price = 500 + (hrs - 4) * 100;
+    setTimeout(() => hoursField.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
   } else if (svc === 'outstation') {
-    kmField.style.display = 'block'
-setTimeout(() => kmField.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
-;
+    kmField.style.display = 'block';
     document.getElementById('kmLabel').textContent = 'Total Kilometers (one-way) *';
     const km = parseInt(document.getElementById('km').value) || 0;
     if (km > 0) {
@@ -260,6 +235,7 @@ setTimeout(() => kmField.scrollIntoView({ behavior: 'smooth', block: 'center' })
       price = 1500;
       note = 'Min ₹1,500. Enter km for exact fare.';
     }
+    setTimeout(() => kmField.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
   } else if (svc === 'outstation_round') {
     kmField.style.display = 'block';
     document.getElementById('kmLabel').textContent = 'Total Kilometers (both ways) *';
@@ -270,6 +246,7 @@ setTimeout(() => kmField.scrollIntoView({ behavior: 'smooth', block: 'center' })
       price = 2500;
       note = 'Min ₹2,500. Enter km for exact fare.';
     }
+    setTimeout(() => kmField.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
   }
 
   document.getElementById('priceValue').textContent = price;
@@ -416,7 +393,6 @@ function updateCustomerView(b) {
       <div style="font-size:18px;font-weight:700;color:#ff6b35;margin-top:6px;">${t('total_fare')}: ₹${total}</div>
       <div style="font-size:12px;color:#666;margin-top:8px;">${t('paying_cash')}</div>`;
     document.getElementById('ratingView').style.display = b.rating ? 'none' : 'block';
-    document.getElementById('complaintBtnWrap').style.display = 'block';
   } else if (b.status !== 'COMPLETED') {
     document.getElementById('rideCompletedPanel').style.display = 'none';
   }
@@ -568,36 +544,19 @@ async function submitComplaintClick() {
   const reason = document.getElementById('complaintReason').value;
   const details = document.getElementById('complaintDetails').value.trim();
   const phone = document.getElementById('complaintPhone').value.trim();
-  
   if (!reason) { showToast('Please select a reason'); return; }
-  
   const res = await submitComplaint({
     bookingId: lastBooking ? lastBooking.id : '',
     customerName: lastBooking ? lastBooking.name : '',
-    customerPhone: phone,
-    driverName: '',
-    reason: reason,
-    details: details
+    customerPhone: phone, driverName: '', reason: reason, details: details
   });
-  
   if (res.ok) {
-    showToast('✅ Complaint submitted. We\'ll contact you.');
+    showToast('✅ Complaint submitted.');
     closeComplaintModal();
   } else {
     showToast('Failed. Please call us directly.');
   }
 }
-</script>// ==================== BIND DROPDOWN EVENTS ====================
-document.addEventListener('DOMContentLoaded', function() {
-  const svc = document.getElementById('service');
-  if (svc) {
-    svc.addEventListener('change', function() {
-      updatePrice();
-    });
-    console.log('✅ Service change listener attached');
-  } else {
-    console.log('❌ Service dropdown not found');
-  }
-});
+</script>
 </body>
 </html>
