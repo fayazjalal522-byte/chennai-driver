@@ -49,7 +49,7 @@
     <input type="text" id="drop" data-i18n-placeholder="drop_placeholder">
 
     <label data-i18n="service_required">Service Type *</label>
-    <select id="service" onchange="updatePrice()">
+    <select id="service">
       <option value="hourly" data-i18n="svc_hourly">Hourly (₹400 for 1-3 hrs, ₹500 for 4 hrs, +₹100/hr after)</option>
       <option value="outstation" data-i18n="svc_outstation">Outstation One-way (₹5/km + bus fare, min ₹1,500)</option>
       <option value="outstation_round" data-i18n="svc_outstation_round">Outstation Round Trip (₹5/km both ways, min ₹2,500)</option>
@@ -57,7 +57,7 @@
 
     <div id="hoursField" style="display:none;">
       <label data-i18n="hours_needed">How many hours? *</label>
-      <select id="hours" onchange="updatePrice()">
+      <select id="hours">
         <option value="1">1 hour — ₹400</option>
         <option value="2">2 hours — ₹400</option>
         <option value="3">3 hours — ₹400</option>
@@ -76,7 +76,7 @@
 
     <div id="kmField" style="display:none;">
       <label id="kmLabel" data-i18n="total_km">Total Kilometers *</label>
-      <input type="number" id="km" min="1" placeholder="e.g., 300" oninput="updatePrice()">
+      <input type="number" id="km" min="1" placeholder="e.g., 300">
     </div>
 
     <label data-i18n="date_time_required">Date & Time *</label>
@@ -195,7 +195,7 @@
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">// Bind all pricing inputs after DOM is ready</script>
 <script src="i18n.js"></script>
 <script src="app.js"></script>
 <script>
@@ -556,7 +556,16 @@ async function submitComplaintClick() {
   } else {
     showToast('Failed. Please call us directly.');
   }
-}
+}// Bind all pricing inputs after DOM is ready
+setTimeout(function() {
+  const svcEl = document.getElementById('service');
+  const hrsEl = document.getElementById('hours');
+  const kmEl = document.getElementById('km');
+  if (svcEl) svcEl.addEventListener('change', updatePrice);
+  if (hrsEl) hrsEl.addEventListener('change', updatePrice);
+  if (kmEl) kmEl.addEventListener('input', updatePrice);
+  console.log('✅ All pricing listeners attached');
+}, 500);
 </script>
 </body>
 </html>
