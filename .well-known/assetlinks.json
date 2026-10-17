@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.driveease.chennai.twa",
+      "sha256_cert_fingerprints": [
+        "2D:83:75:C2:0D:DC:1E:AC:E2:AC:70:C1:04:39:60:DD:6F:7B:1D:A6:C8:2F:BB:A0:10:F5:3B:5B:75:21:15:BE"
+      ]
+    }
+  }
+]
